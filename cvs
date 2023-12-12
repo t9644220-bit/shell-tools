@@ -1,0 +1,165 @@
+#!/bin/bash
+
+# 使用 ClamAV 扫描病毒脚本
+
+## 参数配置
+### 版本号
+VERSION=0.2.0
+### 当前的日期、日期时间
+date=`date +%Y%m%d`
+datetime=`date +%Y%m%d`_`date +%H%M%S`
+### 需要扫描的文件夹（绝对路径）
+scanDir=${1:-/}
+### 病毒文件处理模式【0：不处理，1：复制到指定目录、2：移动至指定目录、3：直接删除（不推荐）】
+model=${2:-2}
+### 工作目录
+workPath=${3:-/opt/clamav}
+### 包管理器【yum：YUM，dnf：DNF，zypper：ZYPPER】
+packageInstaller=${4:-yum}
+### 病毒文件复制/转移文件夹（仅 model 为 1、2 时生效）
+virusPath=${workPath}/scan_${datetime}/virus
+### 日志文件目录
+logsPath=${workPath}/scan_${datetime}/logs
+### 疑似病毒文件数量
+infectedFileNumber=0
+
+## 相关方法
+## 帮助信息
+help () {
+  echo 'Usage:  cvs 需要扫描的目录 处理方式 工作目录 包管理器'
+  echo '参数说明：'
+  echo '  $1： 需要扫描的目录，不配置时默认全盘扫描'
+  echo '  $2： 病毒文件的处理方式，不配置时默认为 2'
+  echo '       0： 不处理；'
+  echo '       1： 复制到指定目录；'
+  echo '       2： 移动至指定目录；'
+  echo '       3： 直接删除（不推荐）'
+  echo '  $3： 工作目录，用于输出日志、存放病毒文件，不配置时默认为 /opt/clamav 目录'
+  echo '  $4： 包管理器，支持 yum、zypper，不配置时默认根据操作系统自动选择'
+  echo '示例：'
+  echo '  全盘扫描，使用默认配置： cvs'
+  echo '  扫描 HOME 目录，使用默认配置： cvs /home'
+  echo '  全盘扫描，不处理病毒文件： cvs / 0'
+  echo '  扫描 HOME 目录，不处理病毒文件： cvs /home 0'
+  echo '  全盘扫描，将日志文件保存至 /tmp/clamav 目录，同时将扫描出的病毒文件也移动至此目录： cvs / 2 /tmp/clamav'
+  echo '  扫描 HOME 目录，将日志文件保存至 /tmp/clamav 目录，同时将扫描出的病毒文件也移动至此目录： cvs /home 2 /tmp/clamav'
+}
+## 版本号
+version () {
+ echo 'cvs '$VERSION
+}
+### 创建文件夹
+createPath () {
+  echo '------------------------------ 开始创建相关文件夹... ------------------------------'
+  mkdir -pv ${virusPath}
+  mkdir -pv ${logsPath}
+  echo '------------------------------ 相关文件夹创建完成！ ------------------------------'
+}
+### 判断当前发行版并设置包管理器
+getOSRelease () {
+  echo '------------------------------ 开始检查 Linux 发行版 ... ------------------------------'
+  [ -r /etc/os-release ] && . /etc/os-release
+    if [ `expr "${ID_LIKE}" : ".*suse.*"` != 0 ]; then
+        packageInstaller=zypper
+        if [ "${ID_LIKE:-}" = suse ] && [ "${VARIANT_ID:-}" = sle-micro ]; then
+            packageInstaller=zypper
+        fi
+    elif [ "${VERSION_ID%%.*}" = "7" ]; then
+        packageInstaller=yum
+    elif [ "${ID_LIKE:-}" = coreos ] || [ "${VARIANT_ID:-}" = coreos ]; then
+        packageInstaller=rpm-ostree
+    else
+        packageInstaller=yum
+    fi
+
+    if [ "${packageInstaller}" = "rpm-ostree" ] && [ -x /bin/yum ]; then
+        packageInstaller=yum
+    fi
+
+    if [ "${packageInstaller}" = "yum" ] && [ -x /usr/bin/dnf ]; then
+        packageInstaller=dnf
+    fi
+  echo '当前发行版为：' ${ID_LIKE}
+  echo '使用的包管理器为：' ${packageInstaller}
+  echo '------------------------------ Linux 发行版检查完成！ ------------------------------'
+}
+### 安装 ClamAV
+installClamAV () {
+  echo '------------------------------ 开始安装 ClamAV ... ------------------------------'
+  if [ "${packageInstaller}" = "yum" ]; then
+    yum install -y epel-release clamav clamav-update
+  elif [ "${packageInstaller}" = "zypper" ]; then
+    zypper install -y clamav
+  fi
+  echo '------------------------------ ClamAV 安装完成！ ------------------------------'
+}
+### 更新 ClamAV
+updateClamAV () {
+  echo '------------------------------ 开始更新 ClamAV ... ------------------------------'
+  if [ "${packageInstaller}" = "yum" ]; then
+    yum update -y epel-release clamav clamav-update
+  elif [ "${packageInstaller}" = "zypper" ]; then
+    zypper update -y clamav
+  fi
+  echo '------------------------------ ClamAV 更新完成！ ------------------------------'
+}
+### 更新病毒库
+updateVirusDatabase () {
+  echo '------------------------------ 开始更新病毒库... ------------------------------'
+  freshclam
+  echo '------------------------------ 病毒库更新完成！ ------------------------------'
+}
+### 扫描病毒
+scanVirus () {
+  echo '------------------------------ 开始扫描指定目录... ------------------------------'
+  case ${model} in
+    0)
+      clamscan --recursive=yes --infected --log=${logsPath}/clamscan.log ${scanDir}
+      ;;
+    1)
+      clamscan --recursive=yes --infected --log=${logsPath}/clamscan.log --copy=${virusPath} ${scanDir}
+      ;;
+    2)
+      clamscan --recursive=yes --infected --log=${logsPath}/clamscan.log --move=${virusPath} ${scanDir}
+      ;;
+    3)
+      clamscan --recursive=yes --infected --log=${logsPath}/clamscan.log --remove=yes ${scanDir}
+      ;;
+    *)
+      clamscan --recursive=yes --infected --log=${logsPath}/clamscan.log ${scanDir}
+      ;;
+  esac
+  infectedFileNumber = $(cat ${logsPath}/clamscan.log | grep "Infected files")
+  echo '------------------------------ 指定目录扫描完成！ ------------------------------'
+  echo '****************************** 疑似病毒文件数量：' ${infectedFileNumber} ' ******************************'
+  echo '****************************** 扫描日志见：'${logsPath}'/clamscan.log ******************************'
+  echo '****************************** 病毒文件见：'${virusPath}'，请及时处理 ******************************'
+}
+### 扫描
+scan () {
+  echo '===================================================================================================='
+  echo `date +%Y-%m-%d` `date +%H:%M:%S`
+  echo '============================== 开始扫描 '${scanDir}' 目录...... =============================='
+  createPath
+  getOSRelease
+  installClamAV
+  updateClamAV
+  updateVirusDatabase
+  scanVirus
+  echo '============================== '${scanDir}' 目录扫描完成！！！ =============================='
+  echo `date +%Y-%m-%d` `date +%H:%M:%S`
+  echo '===================================================================================================='
+}
+
+## 执行方法
+case $1 in
+  help)
+    help
+    ;;
+  version)
+    version
+    ;;
+  *)
+    scan
+    ;;
+esac

@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# 加速下载 GitHub 文件
+
+# 相关参数
+## 版本号
+VERSION=0.2.0
+
+# 相关方法
+## 帮助
+help () {
+  echo 'Usage:  ghd GitHub文件URL（支持 github.com 和 raw.githubusercontent.com ）'
+  echo '示例：'
+  echo '  ghd https://github.com/docker/compose/releases/download/v2.19.1/docker-compose-linux-x86_64'
+}
+## 版本号
+version () {
+ echo 'dii '$VERSION
+}
+## 下载文件
+download () {
+  echo '------------------------------ 正在通过 GitHub Proxy （https://ghproxy.com） 下载 GitHub 文件，请稍后... ------------------------------'
+  curl -O https://mirror.ghproxy.com/$1
+}
+
+# 执行方法
+case $1 in
+  help)
+    help
+    ;;
+  version)
+    version
+    ;;
+  *)
+    curl -O https://mirror.ghproxy.com/$1
+#    download()
+    ;;
+esac

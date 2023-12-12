@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# 查询 docker 镜像信息
+
+# 相关参数
+## 版本号
+VERSION=0.2.0
+## Docker 镜像仓库
+REPO=docker.io
+## Docker 镜像
+IMAGE=$1
+## 仅查询Tags
+ONLY_TAGES=$2
+
+# 相关方法
+## 帮助信息
+help () {
+  echo 'Usage:  dii Docker镜像名称 是否仅查询Tags'
+  echo '提示：需要先安装 skopeo 和 jq 包，安装方式请参考官方文档'
+  echo '示例：'
+  echo '  从 Docker Hub 中查找 MySQL 镜像的信息：dii mysql'
+  echo '  从 Docker Hub 中查找 MySQL 镜像的信息，仅输出 Tags：dii mysql t'
+}
+## 版本号
+version () {
+ echo 'dii '$VERSION
+}
+## 查询所有信息
+searchAllInfo () {
+  skopeo inspect docker://${REPO}/${IMAGE}
+}
+## 仅查询Tags
+searchTagsOnly () {
+  skopeo inspect docker://${REPO}/${IMAGE} | jq ".RepoTags"
+}
+## 查询镜像信息
+searchImage () {
+  echo '------------------------------ 正在从 '$REPO' 搜索镜像 '$IMAGE' 相关信息，请稍后... ------------------------------'
+  if [ $ONLY_TAGES ]; then
+    searchTagsOnly
+  else
+    searchAllInfo
+  fi
+}
+
+# 执行方法
+case $1 in
+  help)
+    help
+    ;;
+  version)
+    version
+    ;;
+  *)
+    searchImage
+    ;;
+esac
