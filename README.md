@@ -124,7 +124,6 @@ cvs / 2 /tmp/clamav
 ``` bash
 cvs /home 2 /tmp/clamav 
 ```
-```
 
 <br/>
 
