@@ -124,3 +124,40 @@ cvs / 2 /tmp/clamav
 ``` bash
 cvs /home 2 /tmp/clamav 
 ```
+```
+
+<br/>
+
+## bf
+
+    备份文件工具。
+
+**所需依赖：**
+
+- openssl
+- 如保存备份文件到腾讯云 COS，则需安装：coscli
+- 如保存备份文件到华为云 OBS，则需安装：obsutil
+
+**参数说明：**
+
+- `$1` ： 备份文件名称
+- `$2` ： 备份文件路径
+- `$3` ： 备份文件加密秘钥路径
+
+**使用方式：**
+
+```bash
+bf 备份文件名称 备份文件路径 备份文件加密秘钥路径
+```
+
+示例：
+
+- 备份 `/opt/gitea` 目录
+``` bash
+bf gitea /opt/gitea
+```
+
+- 备份 `/opt/gitea` 目录，同时使用 `/root/gitea.key` 作为秘钥加密备份文件
+``` bash
+bf gitea /opt/gitea /root/gitea.key
+```
