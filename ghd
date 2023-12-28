@@ -22,7 +22,7 @@ download () {
   echo '------------------------------ 正在通过 GitHub Proxy （https://ghproxy.com） 下载 GitHub 文件，请稍后... ------------------------------'
 #  curl -O https://ghproxy.com/$1
 #  curl -O https://mirror.ghproxy.com/$1
-  curl -O https://github.moeyy.xyz/$1
+  wget https://github.moeyy.xyz/$1
 }
 
 # 执行方法
@@ -34,6 +34,7 @@ case $1 in
     version
     ;;
   *)
-    download()
+#    download
+    wget https://github.moeyy.xyz/$1
     ;;
 esac
