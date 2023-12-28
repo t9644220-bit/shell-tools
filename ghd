@@ -4,7 +4,7 @@
 
 # 相关参数
 ## 版本号
-VERSION=0.2.0
+VERSION=0.3.0
 
 # 相关方法
 ## 帮助
@@ -20,7 +20,9 @@ version () {
 ## 下载文件
 download () {
   echo '------------------------------ 正在通过 GitHub Proxy （https://ghproxy.com） 下载 GitHub 文件，请稍后... ------------------------------'
-  curl -O https://mirror.ghproxy.com/$1
+#  curl -O https://ghproxy.com/$1
+#  curl -O https://mirror.ghproxy.com/$1
+  curl -O https://github.moeyy.xyz/$1
 }
 
 # 执行方法
@@ -32,7 +34,6 @@ case $1 in
     version
     ;;
   *)
-    curl -O https://mirror.ghproxy.com/$1
-#    download()
+    download()
     ;;
 esac
