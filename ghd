@@ -15,7 +15,7 @@ help () {
 }
 ## 版本号
 version () {
- echo 'dii '$VERSION
+ echo 'ghd '$VERSION
 }
 ## 下载文件
 download () {
