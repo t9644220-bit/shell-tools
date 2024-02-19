@@ -134,6 +134,7 @@ cvs /home 2 /tmp/clamav
 **所需依赖：**
 
 - openssl（ 通过包管理器直接安装即可，如：`zypper install -y openssl` 或 `yum install -y openssl` ）
+- 如保存备份文件到 Amazon S3 ，则需安装：AWS CLI（ 安装方式请参考官方文档：https://aws.amazon.com/cn/cli ）
 - 如保存备份文件到腾讯云 COS，则需安装：coscli（ 安装方式请参考官方文档：https://cloud.tencent.com/document/product/436/63144 ）
 - 如保存备份文件到华为云 OBS，则需安装：obsutil（ 安装方式请参考官方文档：https://support.huaweicloud.com/utiltg-obs/obs_11_0003.html ）
 

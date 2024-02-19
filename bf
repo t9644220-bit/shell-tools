@@ -57,7 +57,9 @@ help () {
   echo '  备份 home 目录： bf home /home'
   echo '  备份 home 目录，并使用 /root/home.key 文件作为秘钥加密备份文件： bf home /home /root/home.key'
   echo '其他说明：'
-  echo '  使用前请按实际情况修改备份文件保存方式，若使用远程存储（如 Amazon S3 等）则需要安装相关cli工具并完成配置，具体请参考官方文档。'
+  echo '  1、使用前请按实际情况修改备份文件保存方式；'
+  echo '  2、若使用远程存储（如 Amazon S3 等）则需要安装相关 cli 工具并完成配置，安装及配置方式请参考官方文档；'
+  echo '  3、若需加密备份文件，则需安装 openssl ，安装方式请参考官方文档。'
 }
 ## 版本号
 version () {
@@ -102,7 +104,7 @@ saveToLocal () {
 }
 ## 将备份文件保存到Amazon S3
 saveToOBS () {
-  echo '****************************** 使用 OBS 模式，将保存备份文件到 Amazon S3 桶（ '$obsBucketName' ） ******************************'
+  echo '****************************** 使用 S3 模式，将保存备份文件到 Amazon S3 桶（ '$obsBucketName' ） ******************************'
   aws s3 cp $tmpPath/$backupFileName s3://$s3BucketName/$s3FolderName/$backupFileName
   rm -rf $tmpPath/$backupFileName
 }
