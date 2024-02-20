@@ -103,7 +103,7 @@ saveToLocal () {
   mv $tmpPath/$backupFileName $targetsPath/$backupFileName
 }
 ## 将备份文件保存到Amazon S3
-saveToOBS () {
+saveToS3 () {
   echo '****************************** 使用 S3 模式，将保存备份文件到 Amazon S3 桶（ '$obsBucketName' ） ******************************'
   aws s3 cp $tmpPath/$backupFileName s3://$s3BucketName/$s3FolderName/$backupFileName
   rm -rf $tmpPath/$backupFileName
@@ -129,9 +129,12 @@ save () {
       saveToLocal
       ;;
     1)
-      saveToOBS
+      saveToS3
       ;;
     2)
+      saveToOBS
+      ;;
+    3)
       saveToCOS
       ;;
     *)
