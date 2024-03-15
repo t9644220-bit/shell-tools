@@ -4,7 +4,7 @@
 
 # 参数配置
 ## 版本号
-version="0.2.0"
+version="0.3.0"
 ## 当前的日期、日期时间
 date=`date +%Y%m%d`
 datetime=`date +%Y%m%d`_`date +%H%M%S`
@@ -18,6 +18,10 @@ backupFileName=$dirName"_backup_"$datetime".tar.gz"
 generateBackupFileSHA=1
 ## 是否加密【0：不加密，1：加密】
 needEncrypt=1
+## 加密使用的 OpenSSL 来源【0：宿主机，1：Docker】
+opensslType=0
+## OpenSSL Docker 镜像
+opensslImage=hub.hty1024.com/hty1024/openssl:3.1.4
 ## 加密秘钥文件（秘钥为文件的第一行内容）
 encryptPasswordFile=$3
 ## 备份模式【0：备份到本地目录，1：备份到Amazon S3，2：备份到华为云OBS，3：备份到腾讯云COS】
@@ -87,13 +91,38 @@ generateSHA () {
   mv $backupFileName'_SHA512' $targetsPath
   echo '------------------------------ 备份文件哈希生成成功（ 哈希文件见：' $targetsPath ' ）！ ------------------------------'
 }
-## 加密备份文件
-encrypt () {
-  echo '------------------------------ 开始加密备份文件... ------------------------------'
+## 使用宿主机内置的 OpenSSL 加密
+encryptByHost () {
+  echo '****************************** 使用主机内置 OpenSSL 进行加密 ******************************'
   cd $tmpPath
   mv $backupFileName bak_$backupFileName
   openssl enc -e -aes256 -a -kfile $encryptPasswordFile -in bak_$backupFileName -out $backupFileName
   rm -rf bak_$backupFileName
+}
+## 使用 Docker 运行 OpenSSL 容器加密
+encryptByDocker () {
+  echo '****************************** 运行 OpenSSL Docker 容器进行加密 ******************************' 
+  cd $tmpPath
+  mkdir data
+  cp -rpf $encryptPasswordFile ./data/key
+  mv $backupFileName ./data/bak_$backupFileName
+  chown 1024.1024 -R ./data
+  docker run -dit --name openssl -v ./data:/data $opensslImage
+  docker exec -it openssl openssl enc -e -aes256 -a -kfile /data/key -in /data/bak_$backupFileName -out /data/$backupFileName
+  cp -rpf data/$backupFileName ./
+  docker rm -f openssl
+}
+## 加密备份文件
+encrypt () {
+  echo '------------------------------ 开始加密备份文件... ------------------------------'
+  case $opensslType in
+    1)
+      encryptByDocker
+      ;;
+    *)
+      encryptByHost
+      ;;
+  esac
   echo '------------------------------ 备份文件加密成功！ ------------------------------'
 }
 ## 将备份文件保存到本地
