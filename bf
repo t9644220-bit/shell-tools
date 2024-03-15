@@ -90,7 +90,7 @@ generateSHA () {
   mkdir -pv $targetsPath
   mv $backupFileName'_SHA512' $targetsPath
   echo '------------------------------ 备份文件哈希生成成功（ 哈希文件见：' $targetsPath ' ）！ ------------------------------'
-  echo '哈希校验方式：' 
+  echo '哈希校验方式：' openssl dgst -sha512 $backupFileName 
 }
 ## 使用宿主机内置的 OpenSSL 加密
 encryptByHost () {
@@ -100,8 +100,10 @@ encryptByHost () {
   openssl enc -e -aes256 -a -kfile $encryptPasswordFile -in bak_$backupFileName -out $backupFileName
   rm -rf bak_$backupFileName
   echo '------------------------------ 使用主机内置 OpenSSL 加密完成！ ------------------------------'
-  echo 'OpenSSL 版本号：' openssl version ' ，解密时请确保版本一致！'
-  echo '解密命令：' openssl enc -d -aes256 -a -kfile $encryptPasswordFile -in $backupFileName -out 1_$backupFileName
+  echo 'OpenSSL 版本号：' 
+  openssl version
+  echo '解密命令：' 
+  echo openssl enc -d -aes256 -a -kfile $encryptPasswordFile -in $backupFileName -out 1_$backupFileName
 }
 ## 使用 Docker 运行 OpenSSL 容器加密
 encryptByDocker () {
@@ -111,16 +113,18 @@ encryptByDocker () {
   cp -rpf $encryptPasswordFile ./data/key
   mv $backupFileName ./data/bak_$backupFileName
   chown 1024.1024 -R ./data
-  docker run -dit --name openssl -v ./data:/data $opensslImage
-  docker exec -it openssl openssl enc -e -aes256 -a -kfile /data/key -in /data/bak_$backupFileName -out /data/$backupFileName
+  docker run -dit --name openssl_temp -v ./data:/data $opensslImage
+  docker exec -it openssl_temp openssl enc -e -aes256 -a -kfile /data/key -in /data/bak_$backupFileName -out /data/$backupFileName
   cp -rpf data/$backupFileName ./
-  docker rm -f openssl
+  docker rm -f openssl_temp
   rm -rf data
   echo '------------------------------ 使用 OpenSSL Docker 容器加密完成！ ------------------------------'
-  echo 'Docker 镜像：' $opensslImage
+  echo 'Docker 镜像：' 
+  echo $opensslImage
   echo '解密命令：' 
   echo cp -rpf $backupFileName ./data/$backupFileName
   echo cp -rpf $encryptPasswordFile ./data/key
+  echo chown -R 1024.1024 ./data
   echo docker run -dit --name openssl -v ./data:/data $opensslImage
   echo docker exec -it openssl openssl enc -d -aes256 -a -kfile /data/key -in /data/$backupFileName -out /data/1_$backupFileName
 }
