@@ -188,3 +188,35 @@ sp 代理URL
 ``` bash
 sp 192.168.1.100:30000
 ```
+
+<br/>
+
+## docker-tools
+
+    Docker 工具
+
+选项说明：
+
+- `version`： 查看工具版本
+- `info`： 查看 Docker 信息
+- `install： 安装 Docker
+- `uninstall`： 卸载 Docker
+- `start`： 启动 Docker
+- `stop`： 停止 Docker
+- `restart`： 重启 Docker
+- `update`： 更新 Docker 版本
+
+参数说明：
+
+- `-v`： Docker 版本
+- `-i`： Docker 安装目录
+- `-d`： Docker 数据目录
+- `-p`： Docker 安装包名称（可选，仅离线安装时需要）
+
+示例：
+
+- 查看 Docker 信息： docker-tools info
+- 安装 Docker （使用默认配置）： docker-tools install
+- 安装 Docker （使用自定义配置）： docker-tools install -v 28.0.1 -i /data/docker/bin -d /data/docker/data
+- 卸载 Docker ： docker-tools uninstall
+- 启动 Docker ： docker-tools start

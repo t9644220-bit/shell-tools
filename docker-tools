@@ -1,0 +1,287 @@
+#!/bin/bash
+
+# Docker 工具
+
+# 参数配置
+## 版本号
+VERSION=0.1.0
+## 当前的日期、日期时间
+DATE=`date +%Y%m%d`
+DATETIME=`date +%Y%m%d`_`date +%H%M%S`
+## Docker 版本号
+DOCKER_VERSION=28.0.1
+## Docker 安装目录
+DOCKER_INSTALL_DIR=/opt/docker/bin
+## Docker 数据目录
+DOCKER_DATA_DIR=/opt/docker/data
+## 是否离线安装
+NEED_OFFLINE_INSTALL=false
+## 安装包下载地址（在线安装时使用）
+PACKAGE_URL=https://download.docker.com/linux/static/stable
+## 安装包名称（离线安装时使用）
+PACKAGE_NAME=docker-28.0.1.tgz
+## CPU 架构
+CPU_ARCH=x86_64
+
+# 相关方法
+## 帮助信息
+help () {
+  echo '使用方式:  docker-tools 选项 参数'
+  echo '选项说明：'
+  echo '  version： 查看工具版本'
+  echo '  info： 查看 Docker 信息'
+  echo '  install： 安装 Docker'
+  echo '  uninstall： 卸载 Docker'
+  echo '  start： 启动 Docker'
+  echo '  stop： 停止 Docker'
+  echo '  restart： 重启 Docker'
+  echo '  update： 更新 Docker 版本'
+  echo '参数说明：'
+  echo '  -v： Docker 版本'
+  echo '  -i： Docker 安装目录'
+  echo '  -d： Docker 数据目录'
+  echo '  -p： Docker 安装包名称（可选，仅离线安装时需要）'
+  echo '示例：'
+  echo '  查看 Docker 信息： docker-tools info'
+  echo '  安装 Docker （使用默认配置）： docker-tools install'
+  echo '  安装 Docker （使用自定义配置）： docker-tools install -v 28.0.1 -i /data/docker/bin -d /data/docker/data'
+  echo '  卸载 Docker ： docker-tools uninstall'
+  echo '  启动 Docker ： docker-tools start'
+}
+
+## 版本号
+version () {
+ echo 'docker-tools '$VERSION
+}
+
+## 设置 CPU 架构
+setCPUArch () {
+  echo '------------------------------ 开始设置 CPU 架构... ------------------------------'
+
+  $CPU_ARCH=`arch`
+
+  echo '------------------------------ CPU 架构设置完成! ------------------------------'
+}
+
+## 创建目录
+createDir () {
+  echo '------------------------------ 开始创建相关目录... ------------------------------'
+
+  mkdir -pv $DOCKER_INSTALL_DIR
+  mkdir -pv $DOCKER_DATA_DIR
+  mkdir -pv /etc/docker
+
+  echo '------------------------------ 所需目录创建完成! ------------------------------'
+}
+
+## 创建用户
+createUser () {
+  echo '------------------------------ 开始创建 Docker 用户... ------------------------------'
+  
+  groupadd -r -g 1001 docker
+  useradd -r -g docker -u 1001 -d /home/docker -s /bin/bash docker
+
+  echo '------------------------------ Docker 用户创建完成! ------------------------------'
+}
+
+## 配置系统参数
+configSystem () {
+  echo '------------------------------ 开始配置系统参数... ------------------------------'
+
+  modprobe br_netfilter
+  echo 'net.bridge.bridge-nf-call-ip6tables = 1' > /etc/sysctl.d/docker.conf
+  echo 'net.bridge.bridge-nf-call-iptables = 1' >> /etc/sysctl.d/docker.conf
+  echo 'net.ipv4.ip_forward = 1' >> /etc/sysctl.d/docker.conf
+  sysctl --system
+
+  echo '------------------------------ 系统参数配置完成! ------------------------------'
+}
+
+## 下载安装包
+downloadInstallPackage () {
+  echo '------------------------------ 开始下载 Docker 安装包... ------------------------------'
+
+  wget $PACKAGE_URL/$CPU_ARCH/docker-$DOCKER_VERSION.tgz
+  PACKAGE_NAME=docker-$DOCKER_VERSION.tgz
+
+  echo '------------------------------ Docker 安装包下载完成! ------------------------------'
+}
+
+## 安装 Docker
+installDockerEngine () {
+  echo '------------------------------ 开始安装 Docker Engine... ------------------------------'
+
+  tar zxvf $PACKAGE_NAME -C $DOCKER_INSTALL_DIR --strip-components 1
+
+  echo '------------------------------ Docker Engine 安装完成! ------------------------------'
+}
+
+## 配置环境变量
+configEnv () {
+  echo '------------------------------ 开始配置环境变量... ------------------------------'
+
+  cp -rpf ~/.bashrc ~/.bashrc.bak.$DATE
+  echo '# Docker Env Begin' >> ~/.bashrc
+  echo 'export DOCKER_HOME='$DOCKER_INSTALL_DIR >> ~/.bashrc
+  echo 'export PATH=$PATH:$DOCKER_HOME' >> ~/.bashrc
+  echo '# Docker Env End' >> ~/.bashrc
+  source ~/.bashrc
+
+  cp -rpf /etc/profile /etc/profile.bak.$DATE
+  echo '# Docker Env Begin' >> /etc/profile
+  echo 'export DOCKER_HOME='$DOCKER_INSTALL_DIR >> /etc/profile
+  echo 'export PATH=$PATH:$DOCKER_HOME' >> /etc/profile
+  echo '# Docker Env End' >> /etc/profile
+  source /etc/profile
+
+  echo '------------------------------ 环境变量配置完成! ------------------------------'
+}
+
+## 配置系统服务
+configService () {
+  echo '------------------------------ 开始配置系统服务... ------------------------------'
+
+  sed -i 's#/opt/docker/bin#'$DOCKER_INSTALL_DIR'#g' docker.service
+  cp -rpf docker.service /usr/lib/systemd/system/docker.service
+  cp -rpf docker.socket /usr/lib/systemd/system/docker.socket
+  systemctl daemon-reload
+
+  echo '------------------------------ 系统服务配置完成! ------------------------------'
+}
+
+## 配置 Docker 
+configDocker () {
+  echo '------------------------------ 开始配置 Docker... ------------------------------'
+
+  ed -i 's#/opt/docker/data#'$DOCKER_DATA_DIR'#g' daemon.json
+  cp -rpf daemon.json /etc/docker/daemon.json
+
+  chmod -R docker.docker $DOCKER_INSTALL_DIR
+  chmod -R 755 $DOCKER_INSTALL_DIR
+  chmod -R docker.docker $DOCKER_DATA_DIR
+  hmod -R 755 $DOCKER_DATA_DIR
+
+  echo '------------------------------ Docker 配置完成! ------------------------------'
+}
+
+## 启动 Docker
+startD () {
+  echo '------------------------------ 开始启动 Docker... ------------------------------'
+
+  systemctl start docker
+  systemctl enable docker
+
+  echo '------------------------------ Docker 启动完成! ------------------------------'
+}
+
+## 停止 Docker
+stopD () {
+  echo '------------------------------ 开始停止 Docker... ------------------------------'
+
+  systemctl stop docker
+  systemctl disenable docker
+
+  echo '------------------------------ Docker 停止完成! ------------------------------'
+}
+
+## 重启 Docker
+restartD () {
+  stop
+  start
+}
+
+## 查询 Dokcer 信息
+info () {
+  echo '------------------------------ 开始查询 Docker 信息... ------------------------------'
+
+  echo '------------------------------ Docker 信息查询完成! ------------------------------'
+}
+
+## 安装 Docker
+install () {
+  echo '===================================================================================================='
+  echo `date +%Y-%m-%d` `date +%H:%M:%S`
+  echo '============================== 开始安装 Docker ...... =============================='
+
+  echo $DOCKER_VERSION
+  echo $DOCKER_INSTALL_DIR
+  echo $DOCKER_DATA_DIR
+  echo $NEED_OFFLINE_INSTALL
+  echo $PACKAGE_URL
+  echo $PACKAGE_NAME
+  echo $CPU_ARCH
+
+  setCPUArch
+  createDir
+  createUser
+  configSystem
+  if [ !$NEED_OFFLINE_INSTALL ];then
+    downloadInstallPackage
+  fi
+  installDockerEngine
+  configEnv
+  configService
+  configDocker
+  startD
+
+  echo '------------------------------ Docker 安装完成! ------------------------------'
+  echo '============================== Docker 安装完成！！！ =============================='
+  echo `date +%Y-%m-%d` `date +%H:%M:%S`
+  echo '===================================================================================================='
+}
+
+# 初始化选项
+while getopts "v:i:d:p:" opt; do
+  case $opt in
+    v) 
+      DOCKER_VERSION="$OPTARG"
+      echo $DOCKER_VERSION
+      ;;
+    i) 
+      DOCKER_INSTALL_DIR="$OPTARG"
+      echo $DOCKER_INSTALL_DIR
+      ;;
+    d)
+      DOCKER_DATA_DIR="$OPTARG"
+      echo $DOCKER_DATA_DIR
+      ;;
+    p)
+      NEED_OFFLINE_INSTALL=true
+      PACKAGE_NAME="$OPTARG"
+      echo $PACKAGE_NAME
+      ;;
+  esac
+done
+
+# 移除已经使用的参数
+shift $((OPTIND-1))
+
+# 根据参数执行方法
+case $@ in
+  help)
+    help
+    ;;
+  version)
+    version
+    ;;
+  install)
+    install
+    ;;
+  info)
+    info
+    ;;
+  startD)
+    startD
+    ;;
+  stopD)
+    stopD
+    ;;
+  restart)
+    restartD
+    ;;
+  *)
+    help
+    ;;
+
+esac
+
