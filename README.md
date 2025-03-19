@@ -165,3 +165,26 @@ bf gitea /opt/gitea
 ``` bash
 bf gitea /opt/gitea /root/gitea.key
 ```
+
+<br/>
+
+## sp
+
+    设置系统代理工具。
+
+**参数说明：**
+
+- `$1` ： 代理URL
+
+**使用方式：**
+
+```bash
+sp 代理URL
+```
+
+示例： 
+
+- 设置代理为 `192.168.1.100:30000`  
+``` bash
+sp 192.168.1.100:30000
+```
