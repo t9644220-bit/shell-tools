@@ -1,0 +1,17 @@
+{
+  "exec-opts" : ["native.cgroupdriver=systemd"],
+  "log-level": "warn",
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m",
+    "max-file": "5"
+  },
+  "registry-mirrors": [
+    "https://dockerpull.org",
+    "https://hub.geekery.cn",
+    "https://docker.1ms.run"
+  ],
+  "bip": "10.21.21.1/24",
+  "data-root": "/opt/docker/data",
+  "live-restore": true
+}
