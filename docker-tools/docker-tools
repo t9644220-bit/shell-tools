@@ -238,16 +238,16 @@ removeEnv () {
 
   cp -rpf ~/.bashrc ~/.bashrc.bak.$DATE
   sed -i 's/# Docker Env Begin//g' ~/.bashrc
-  sed -i 's/export DOCKER_HOME='$DOCKER_INSTALL_DIR'//g' ~/.bashrc
+  sed -i 's#export DOCKER_HOME='$DOCKER_INSTALL_DIR'##g' ~/.bashrc
   sed -i 's/export PATH=$PATH:$DOCKER_HOME//g' ~/.bashrc
   sed -i 's/# Docker Env End//g' ~/.bashrc
   source ~/.bashrc
 
   cp -rpf /etc/profile /etc/profile.bak.$DATE
   sed -i 's/# Docker Env Begin//g' /etc/profile
-  sed -i 's/export DOCKER_HOME='$DOCKER_INSTALL_DIR'//g' /etc/profile
+  sed -i 's#export DOCKER_HOME='$DOCKER_INSTALL_DIR'##g' /etc/profile
   sed -i 's/export PATH=$PATH:$DOCKER_HOME//g' /etc/profile
-  sed -i 's/# Docker Env End//g' ~/.bashrc
+  sed -i 's/# Docker Env End//g' /etc/profile
   source /etc/profile
 
   echo '------------------------------ 环境变量移除完成! ------------------------------'
@@ -257,9 +257,9 @@ removeEnv () {
 configService () {
   echo '------------------------------ 开始配置系统服务... ------------------------------'
 
-  sed -i 's#/opt/docker/bin#'$DOCKER_INSTALL_DIR'#g' docker.service
   cp -rpf docker.service /usr/lib/systemd/system/docker.service
   cp -rpf docker.socket /usr/lib/systemd/system/docker.socket
+  sed -i 's#{{DOCKER_BIN_DIR}}#'$DOCKER_INSTALL_DIR'#g' /usr/lib/systemd/system/docker.service
   systemctl daemon-reload
 
   echo '------------------------------ 系统服务配置完成! ------------------------------'
@@ -280,8 +280,8 @@ removeService () {
 configDockerEngine () {
   echo '------------------------------ 开始配置 Docker... ------------------------------'
 
-  ed -i 's#/opt/docker/data#'$DOCKER_DATA_DIR'#g' daemon.json
   cp -rpf daemon.json /etc/docker/daemon.json
+  sed -i 's#{{DOCKER_DATA_DIR}}#'$DOCKER_DATA_DIR'#g' /etc/docker/daemon.json
 
   chmod -R docker.docker $DOCKER_INSTALL_DIR
   chmod -R 755 $DOCKER_INSTALL_DIR
@@ -348,7 +348,7 @@ onlyInstallDockerEngine () {
   createDir
   createUser
   configSystem
-  if [ !NEED_OFFLINE_INSTALL ];then
+  if [ $NEED_OFFLINE_INSTALL == "false" ];then
     downloadDockerEnginePackage 
   fi
   installDockerEngine
@@ -356,7 +356,7 @@ onlyInstallDockerEngine () {
   configService
   configDockerEngine
   startDocker
-  if [ $NEED_ENABLE_DOCKER ];then
+  if [ $NEED_ENABLE_DOCKER == "true" ];then
     enableDocker
   fi
   infoDocker
@@ -369,7 +369,7 @@ onlyInstallDockerCompose () {
   echo '------------------------------ 开始安装 Docker Compose... ------------------------------'
 
   searchCPUArch
-  if [ $NEED_OFFLINE_INSTALL == "true" ]; then
+  if [ $NEED_OFFLINE_INSTALL == "false" ]; then
     downloadDockerComposePackage
   fi
   installDockerCompose

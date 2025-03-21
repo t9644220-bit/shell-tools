@@ -12,6 +12,6 @@
     "https://docker.1ms.run"
   ],
   "bip": "10.21.21.1/24",
-  "data-root": "/opt/docker/data",
+  "data-root": "{{DOCKER_DATA_DIR}}",
   "live-restore": true
 }

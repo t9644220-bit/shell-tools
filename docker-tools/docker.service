@@ -7,12 +7,11 @@ Requires=docker.socket
 
 [Service]
 Type=notify
-Environment=PATH=/data/docker/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=PATH={{DOCKER_BIN_DIR}}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 # the default is not to use systemd for cgroups because the delegate issues still
 # exists and systemd currently does not support the cgroup feature set required
-# for containers run by docker
-ExecStart=/data/docker/bin/dockerd -H unix://var/run/docker.sock
-ExecReload=/bin/kill -s HUP
+# for containers run by dockerExecStart={{DOCKER_BIN_DIR}}/dockerd -H unix://var/run/docker.sock
+ExecStart={{DOCKER_BIN_DIR}}/dockerd -H unix://var/run/docker.sock
 # Having non-zero Limit*s causes performance problems due to accounting overhead
 # in the kernel. We recommend using cgroups to do container-local accounting.
 LimitNOFILE=infinity
