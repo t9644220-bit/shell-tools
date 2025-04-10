@@ -34,7 +34,7 @@ setSystemdProxy () {
   echo 'DefaultEnvironment="HTTP_PROXY=http://'$PROXY_URL'"' >> /etc/systemd/system.conf.d/proxy.conf
   echo 'DefaultEnvironment="HTTPS_PROXY=http://'$PROXY_URL'"' >> /etc/systemd/system.conf.d/proxy.conf
   echo 'DefaultEnvironment="FTP_PROXY=http://'$PROXY_URL'"' >> /etc/systemd/system.conf.d/proxy.conf
-  echo 'DefaultEnvironment="NO_PROXY=localhost,127.0.0.1"' >> /etc/systemd/system.conf.d/proxy.conf
+  echo 'DefaultEnvironment="NO_PROXY=localhost,127.0.0.1,10.96.0.0/12,10.20.0.0/16,192.168.0.0/16,.svc,.cluster.local"' >> /etc/systemd/system.conf.d/proxy.conf
   systemctl daemon-reexec
  
   echo '------------------------------ 系统代理设置完成! ------------------------------' 
@@ -63,7 +63,7 @@ setShellProxy () {
   echo 'export http_proxy="http://'$PROXY_URL'"' >> /etc/profile
   echo 'export https_proxy="http://'$PROXY_URL'"' >> /etc/profile
   echo 'export ftp_proxy="http://'$PROXY_URL'"' >> /etc/profile
-  echo 'export no_proxy="localhost,127.0.0.1"' >> /etc/profile
+  echo 'export no_proxy="localhost,127.0.0.1,10.96.0.0/12,10.20.0.0/16,192.168.0.0/16,.svc,.cluster.local"' >> /etc/profile
   echo '# PROXY Env End' >> /etc/profile
   source /etc/profile
 
@@ -72,7 +72,7 @@ setShellProxy () {
   echo 'export http_proxy="http://'$PROXY_URL'"' >> ~/.bashrc
   echo 'export https_proxy="http://'$PROXY_URL'"' >> ~/.bashrc
   echo 'export ftp_proxy="http://'$PROXY_URL'"' >> ~/.bashrc
-  echo 'export no_proxy="localhost,127.0.0.1"' >> ~/.bashrc
+  echo 'export no_proxy="localhost,127.0.0.1,10.96.0.0/12,10.20.0.0/16,192.168.0.0/16,.svc,.cluster.local"' >> ~/.bashrc
   echo '# PROXY Env End' >> ~/.bashrc
   source /etc/profile
 
