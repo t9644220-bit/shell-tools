@@ -4,7 +4,7 @@
 
 # 参数配置
 ## 版本号
-VERSION=1.2.0
+VERSION=1.2.1
 ## 当前的日期、日期时间
 DATE=`date +%Y%m%d`
 DATETIME=`date +%Y%m%d`_`date +%H%M%S`
@@ -355,8 +355,8 @@ stopDocker () {
 
 ## 重启 Docker
 restartDocker () {
-  stop
-  start
+  stopDocker
+  startDocker
 }
 
 ## 设置 Docker 自启动
@@ -463,6 +463,9 @@ onlyUpdateDockerCompose () {
 ## 启用 Docker Swarm
 onlyEnableDockerSwarm () {
   echo '------------------------------ 开始启用 Docker Swarm... ------------------------------'
+
+  sed -i 's#"live-restore": true#"live-restore": false#g' /etc/docker/daemon.json
+  restartDocker
 
   if [ $DOCKER_SWARM_ROLE == "manager" ]; then
     docker swarm init --advertise-addr $DOCKER_SWARM_MANAGER_IP
