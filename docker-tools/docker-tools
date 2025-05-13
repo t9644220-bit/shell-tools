@@ -4,7 +4,7 @@
 
 # 参数配置
 ## 版本号
-VERSION=1.1.1
+VERSION=1.2.0
 ## 当前的日期、日期时间
 DATE=`date +%Y%m%d`
 DATETIME=`date +%Y%m%d`_`date +%H%M%S`
@@ -34,6 +34,14 @@ DOCKER_COMPOSE_PACKAGE_URL=https://github.com/docker/compose/releases/download
 DOCKER_COMPOSE_PACKAGE_NAME=docker-compose-linux-x86_64
 ## 是否需要设置 Docker 开机自启动
 NEED_ENABLE_DOCKER=true
+## 是否启用 Swarm 模式
+NEED_ENABLE_DOCKER_SWARM=false
+## Docker Swarm 角色
+DOCKER_SWARM_ROLE=manager
+## Docker Swarm Manager IP
+DOCKER_SWARM_MANAGER_IP=127.0.0.1
+## Docker Swarm Token
+DOCKER_SWARM_TOKEN=123456
 
 # 相关方法
 ## 帮助信息
@@ -50,6 +58,10 @@ help () {
   echo '  -n： Docker Compose 安装包名称（可选，仅离线安装时使用，默认为在线安装）'
   echo '  -a： 仅安装 Docker Engine（可选，默认安装 Docker Engine 和 Docker Compose ）'
   echo '  -b： 仅安装 Docker Compose（可选，默认安装 Docker Engine 和 Docker Compose ）'
+  echo '  -s： 启用 Docker Swarm（可选，默认不启用 ）'
+  echo '  -r： Docker Swarm 角色（可选，默认 manager，可选 manager、worker ）'
+  echo '  -m： Docker Swarm Manager IP（可选，默认 127.0.0.1 ）'
+  echo '  -t： Docker Swarm Token（当角色为 worker 时必选 ）'
   echo '选项说明：'
   echo '  version： 查看工具版本'
   echo '  install： 安装 Docker'
@@ -60,10 +72,13 @@ help () {
   echo '  enable： 设置 Docker 开机自启动'
   echo '  disable： 取消 Docker 开机自启动'
   echo '  update： 更新 Docker 版本'
+  echo '  swarm： 设置 Docker Swarm'
   echo '  info： 查看 Docker 信息'
   echo '示例：'
   echo '  安装 Docker （使用默认配置） ： docker-tools install'
   echo '  安装 Docker （使用自定义配置） ： docker-tools -v 28.1.1 -i /data/docker/bin -d /data/docker/data -p docker-28.1.1.tgz -c v2.36.0 -n docker-compose-linux-x86_64 install'
+  echo '  安装 Docker （同时作为 manager 节点启用 Swarm） ： docker-tools -s install'
+  echo '  安装 Docker （同时作为 worker 节点启用 Swarm） ： docker-tools -s -r worker -m 192.168.0.100 -t 123456 install'
   echo '  安装 Docker （仅安装 Docker Engine） ： docker-tools -oe install'
   echo '  安装 Docker （仅安装 Docker Compose） ： docker-tools -oc install'
   echo '  卸载 Docker （使用默认配置） ： docker-tools uninstall'
@@ -71,6 +86,8 @@ help () {
   echo '  重启 Docker ： docker-tools restart'
   echo '  设置 Docker 开机自启动 ： docker-tools enable'
   echo '  取消 Docker 开机自启动 ： docker-tools disable'
+  echo '  设置 Docker Swarm（manager） ： docker-tools swarm'
+  echo '  设置 Docker Swarm（worker） ： docker-tools -r worker -m 192.168.0.100 -t 123456 swarm'
   echo '  查看 Docker 信息 ： docker-tools info'
 }
 
@@ -303,6 +320,13 @@ configDockerEngine () {
   cp -rpf daemon.json /etc/docker/daemon.json
   sed -i 's#{{DOCKER_DATA_DIR}}#'$DOCKER_DATA_DIR'#g' /etc/docker/daemon.json
 
+  if [ $NEED_ENABLE_DOCKER_SWARM == "false" ]; then
+    sed -i 's#{{DOCKER_LIVE_RESTORE}}#true#g' /etc/docker/daemon.json
+  fi
+  if [ $NEED_ENABLE_DOCKER_SWARM == "true" ]; then
+    sed -i 's#{{DOCKER_LIVE_RESTORE}}#false#g' /etc/docker/daemon.json
+  fi
+
   chown -R docker.docker $DOCKER_INSTALL_DIR
   chmod -R 755 $DOCKER_INSTALL_DIR
   chown -R docker.docker $DOCKER_DATA_DIR
@@ -436,6 +460,20 @@ onlyUpdateDockerCompose () {
   echo '------------------------------ Docker Conpose 更新完成! ------------------------------'
 }
 
+## 启用 Docker Swarm
+onlyEnableDockerSwarm () {
+  echo '------------------------------ 开始启用 Docker Swarm... ------------------------------'
+
+  if [ $DOCKER_SWARM_ROLE == "manager" ]; then
+    docker swarm init --advertise-addr $DOCKER_SWARM_MANAGER_IP
+  fi
+  if [ $DOCKER_SWARM_ROLE == "worker" ]; then
+    docker swarm join --token $DOCKER_SWARM_TOKEN $DOCKER_SWARM_MANAGER_IP:2377
+  fi
+
+  echo '------------------------------ Docker Swarm 启用完成! ------------------------------'
+}
+
 ## 安装 Docker
 install () {
   echo '===================================================================================================='
@@ -456,6 +494,7 @@ install () {
   echo 'Docker Compose 安装包下载地址（在线安装时使用） ： '$DOCKER_COMPOSE_PACKAGE_URL
   echo 'Docker Compose 安装包名称（离线安装时使用） ： '$DOCKER_COMPOSE_PACKAGE_NAME
   echo '是否开机自动启动： '$NEED_ENABLE_DOCKER
+  echo '是否启用 Docker Swarm： '$NEED_ENABLE_DOCKER_SWARM
   echo '请确认安装参数是否正确，并根据提示进入安装（Y：安装，N：不安装，E：退出）：'
   read NEED_DELETE
   case $NEED_DELETE in
@@ -463,9 +502,11 @@ install () {
       if [ $NEED_INSTALL_ENGINE == "true" ]; then
         onlyInstallDockerEngine
       fi
-
       if [ $NEED_INSTALL_COMPOSE == "true" ]; then
         onlyInstallDockerCompose
+      fi
+      if [ $NEED_ENABLE_DOCKER_SWARM == "true" ]; then
+        onlyEnableDockerSwarm
       fi
       ;;
     N)
@@ -545,6 +586,7 @@ update () {
   echo 'Docker Compose 安装包下载地址（在线安装时使用） ： '$DOCKER_COMPOSE_PACKAGE_URL
   echo 'Docker Compose 安装包名称（离线安装时使用） ： '$DOCKER_COMPOSE_PACKAGE_NAME
   echo '是否开机自动启动： '$NEED_ENABLE_DOCKER
+  echo '是否启用 Docker Swarm： '$NEED_ENABLE_DOCKER_SWARM
   echo '此操作将会更新当前 Docker 版本，存在一定风险，请确认是否更新（Y：更新，N：不更新，E：退出）：'
   read NEED_UPDATE
   case $NEED_UPDATE in
@@ -554,6 +596,9 @@ update () {
       fi
       if [ $NEED_INSTALL_COMPOSE == 'true' ]; then
         onlyUpdateDockerCompose
+      fi
+      if [ $NEED_ENABLE_DOCKER_SWARM == "true" ]; then
+        onlyEnableDockerSwarm
       fi
       ;;
     N)
@@ -577,7 +622,7 @@ update () {
 # 初始化选项
 echo $@
 
-while getopts "v:i:d:p:c:n:ab" opt; do
+while getopts "v:i:d:p:c:n:r:m:t:abs" opt; do
   case $opt in
     v) 
       ## 设置 Docker Engine 版本
@@ -623,6 +668,33 @@ while getopts "v:i:d:p:c:n:ab" opt; do
       NEED_INSTALL_COMPOSE=true
       echo '用户自定义： 仅安装 Docker Compose'
       ;;
+    s)
+      ## 设置启用 Docker Swarm
+      NEED_ENABLE_DOCKER_SWARM=true
+      echo '用户自定义： 启用 Docker Swarm'
+      ;;
+    r)
+      ## 设置 Docker Swarm 角色
+      if [ $OPTARG != "manager" && $OPTARG != "worker" ]; then
+        echo '角色错误，可选择：manager、worker'
+	exit 1
+      fi
+      NEED_ENABLE_DOCKER_SWARM=true
+      DOCKER_SWARM_ROLE="$OPTARG"
+      echo '用户自定义： Docker Swarm 角色（'$OPTARG'）'
+      ;;
+    m)
+      ## 设置 Docker Swarm Manager IP
+      NEED_ENABLE_DOCKER_SWARM=true
+      DOCKER_SWARM_MANAGER_IP="$OPTARG"
+      echo '用户自定义： Docker Swarm Manager IP（'$OPTARG'）'
+      ;;
+    t)
+      ## 设置 Docker Swarm Token
+      NEED_ENABLE_DOCKER_SWARM=true
+      DOCKER_SWARM_TOKEN="$OPTARG"
+      echo '用户自定义： Docker Swarm Token（'$OPTARG'）'
+      ;;
   esac
 done
 
@@ -663,6 +735,9 @@ case $@ in
     ;;
   disable)
     disableDocker
+    ;;
+  swarm)
+    onlyEnableDockerSwarm
     ;;
   *)
     help
