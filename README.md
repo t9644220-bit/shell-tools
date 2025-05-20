@@ -18,7 +18,7 @@
 ghd 需要下载的GitHub文件的URL
 ```
 
-    示例：
+**示例**：
 
 ```bash
 ghd https://github.com/docker/compose/releases/download/v2.18.1/docker-compose-linux-x86_64
@@ -48,7 +48,7 @@ ghd https://github.com/docker/compose/releases/download/v2.18.1/docker-compose-l
 dii Docker镜像名称
 ```
 
-    示例：
+**示例**：
 
 ```bash
 dii mysql
@@ -60,7 +60,7 @@ dii mysql
 dii Docker镜像名称 t
 ```
 
-    示例：
+**示例**：
 
 ```bash
 dii mysql t
@@ -93,7 +93,7 @@ dii mysql t
 cvs 需要扫描的目录 处理方式 工作目录 包管理器
 ```
 
-示例：
+**示例**：
 
 - 全盘扫描，使用默认配置
 ``` bash
@@ -154,7 +154,7 @@ cvs /home 2 /tmp/clamav
 bf 备份文件名称 备份文件路径 备份文件加密秘钥路径
 ```
 
-示例：
+**示例**：
 
 - 备份 `/opt/gitea` 目录
 ``` bash
@@ -182,7 +182,7 @@ bf gitea /opt/gitea /root/gitea.key
 sp 代理URL
 ```
 
-示例： 
+**示例**： 
 
 - 设置代理为 `192.168.1.100:30000`  
 ``` bash
@@ -195,28 +195,54 @@ sp 192.168.1.100:30000
 
     Docker 工具
 
-选项说明：
+**使用方式**:  
 
-- `version`： 查看工具版本
-- `info`： 查看 Docker 信息
-- `install： 安装 Docker
-- `uninstall`： 卸载 Docker
-- `start`： 启动 Docker
-- `stop`： 停止 Docker
-- `restart`： 重启 Docker
-- `update`： 更新 Docker 版本
+```
+docker-tools 参数 选项
+```
 
-参数说明：
+**参数说明**：
 
-- `-v`： Docker 版本
-- `-i`： Docker 安装目录
-- `-d`： Docker 数据目录
-- `-p`： Docker 安装包名称（可选，仅离线安装时需要）
+  - `-v`： Docker 版本（可选，默认安装 28.1.1 版本）
+  - `-i`： Docker 安装目录（可选，默认为 /opt/docker/bin）
+  - `-d`： Docker 数据目录（可选，默认为 /opt/docker/data）
+  - `-p`： Docker 安装包名称（可选，仅离线安装时使用，默认为在线安装）
+  - `-c`： Docker Compose 版本（可选，默认安装 v2.36.0 版本）
+  - `-n`： Docker Compose 安装包名称（可选，仅离线安装时使用，默认为在线安装）
+  - `-a`： 仅安装 Docker Engine（可选，默认安装 Docker Engine 和 Docker Compose ）
+  - `-b`： 仅安装 Docker Compose（可选，默认安装 Docker Engine 和 Docker Compose ）
+  - `-s`： 启用 Docker Swarm（可选，默认不启用 ）
+  - `-r`： Docker Swarm 角色（可选，默认 manager，可选 manager、worker ）
+  - `-m`： Docker Swarm Manager IP（可选，默认 127.0.0.1 ）
+  - `-t`： Docker Swarm Token（当角色为 worker 时必选 ）
 
-示例：
+**选项说明**：
 
-- 查看 Docker 信息： docker-tools info
-- 安装 Docker （使用默认配置）： docker-tools install
-- 安装 Docker （使用自定义配置）： docker-tools install -v 28.0.1 -i /data/docker/bin -d /data/docker/data
-- 卸载 Docker ： docker-tools uninstall
-- 启动 Docker ： docker-tools start
+  - `version`： 查看工具版本
+  - `install`： 安装 Docker
+  - `uninstall`： 卸载 Docker
+  - `start`： 启动 Docker
+  - `stop`： 停止 Docker
+  - `restart`： 重启 Docker
+  - `enable`： 设置 Docker 开机自启动
+  - `disable`： 取消 Docker 开机自启动
+  - `update`： 更新 Docker 版本
+  - `swarm`： 设置 Docker Swarm
+  - `info`： 查看 Docker 信息
+
+**示例**：
+
+  - 安装 Docker （使用默认配置） ： `docker-tools install`
+  - 安装 Docker （使用自定义配置） ： `docker-tools -v 28.1.1 -i /data/docker/bin -d /data/docker/data -p docker-28.1.1.tgz -c v2.36.0 -n docker-compose-linux-x86_64 install`
+  - 安装 Docker （同时作为 manager 节点启用 Swarm） ： `docker-tools -s install`
+  - 安装 Docker （同时作为 worker 节点启用 Swarm） ： `docker-tools -s -r worker -m 192.168.0.100 -t 123456 install`
+  - 安装 Docker （仅安装 Docker Engine） ： `docker-tools -oe install`
+  - 安装 Docker （仅安装 Docker Compose） ： `docker-tools -oc install`
+  - 卸载 Docker （使用默认配置） ： `docker-tools uninstall`
+  - 卸载 Docker （使用自定义配置） ： `docker-tools -v 28.1.1 -i /data/docker/bin -d /data/docker/data -p docker-28.1.1.tgz -c v2.36.0 -n docker-compose-linux-x86_64 uninstall`
+  - 重启 Docker ： `docker-tools restart`
+  - 设置 Docker 开机自启动 ： `docker-tools enable`
+  - 取消 Docker 开机自启动 ： `docker-tools disable`
+  - 设置 Docker Swarm（manager） ： `docker-tools swarm`
+  - 设置 Docker Swarm（worker） ： `docker-tools -r worker -m 192.168.0.100 -t 123456 swarm`
+  - 查看 Docker 信息 ： `docker-tools info`
