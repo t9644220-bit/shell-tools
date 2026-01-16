@@ -1,33 +1,36 @@
 #!/bin/bash
+set -euo pipefail
 
 # Docker 工具
 
 # 参数配置
 ## 版本号
-VERSION=1.3.1
+VERSION=2.0.0
 ## 当前的日期、日期时间
-DATE=`date +%Y%m%d`
-DATETIME=`date +%Y%m%d`_`date +%H%M%S`
+DATE="$(date '+%Y%m%d')"
+DATETIME="$(date '+%Y%m%d_%H%M%S')"
 ## 服务器 CPU 架构
 CPU_ARCH=x86_64
+## 系统配置文件目录
+SYSTEMD_DIR=/usr/lib/systemd/system
 ## Docker 安装目录
 DOCKER_INSTALL_DIR=/opt/docker/bin
 ## Docker 数据目录
 DOCKER_DATA_DIR=/opt/docker/data
 ## 是否离线安装
-NEED_OFFLINE_INSTALL=false
+NEED_OFFLINE_INSTALL=true
 ## 是否安装 Docker Engine
 NEED_INSTALL_ENGINE=true
 ## Docker 版本号
-DOCKER_VERSION=28.2.1
+DOCKER_VERSION=29.1.4
 ## Docker 安装包下载地址（在线安装时使用）
 DOCKER_PACKAGE_URL=https://download.docker.com/linux/static/stable
 ## Docker 安装包名称（离线安装时使用）
-DOCKER_PACKAGE_NAME=docker-28.2.1.tgz
+DOCKER_PACKAGE_NAME=docker-29.1.4.tgz
 ## 是否安装 Docker Compose
 NEED_INSTALL_COMPOSE=true
 ## Docker Compose 版本号
-DOCKER_COMPOSE_VERSION=v2.36.2
+DOCKER_COMPOSE_VERSION=v5.0.1
 ## Docker Compose 安装包下载地址（在线安装时使用）
 DOCKER_COMPOSE_PACKAGE_URL=https://github.com/docker/compose/releases/download
 ## Docker Compose 安装包名称（离线安装时使用）
@@ -43,332 +46,579 @@ DOCKER_SWARM_MANAGER_IP=127.0.0.1
 ## Docker Swarm Token
 DOCKER_SWARM_TOKEN=123456
 
+# 日志颜色
+## 普通颜色
+readonly COLOR_RESET='\033[0m'
+readonly COLOR_RED='\033[0;31m'
+readonly COLOR_GREEN='\033[0;32m'
+readonly COLOR_YELLOW='\033[0;33m'
+readonly COLOR_BLUE='\033[0;34m'
+readonly COLOR_PURPLE='\033[0;35m'
+readonly COLOR_CYAN='\033[0;36m'
+readonly COLOR_WHITE='\033[0;37m'
+
+## 加粗颜色
+readonly COLOR_BOLD_RED='\033[1;31m'
+readonly COLOR_BOLD_GREEN='\033[1;32m'
+readonly COLOR_BOLD_YELLOW='\033[1;33m'
+readonly COLOR_BOLD_BLUE='\033[1;34m'
+readonly COLOR_BOLD_CYAN='\033[1;36m'
+
 # 相关方法
-## 日志打印
-info () {
-  echo '[INFO] ['`date +%Y-%m-%d` `date +%H:%M:%S`'] ' "$@"
+## 调试
+log_debug () {
+  echo -e "${COLOR_BOLD_CYAN}[DEBUG]${COLOR_RESET} [$(date '+%Y-%m-%d %H:%M:%S')] ${COLOR_CYAN}$* ${COLOR_RESET}"
 }
 
-## 警告打印
-warning () {
-  echo '[WARN] ['`date +%Y-%m-%d` `date +%H:%M:%S`'] ' "$@" >&2
+## 信息
+log_info () {
+  echo -e "${COLOR_BOLD_BLUE}[INFO]${COLOR_RESET} [$(date '+%Y-%m-%d %H:%M:%S')] ${COLOR_BLUE}$* ${COLOR_RESET}"
 }
 
-## 错误打印
-error () {
-  echo '[ERROR] ['`date +%Y-%m-%d` `date +%H:%M:%S`'] ' "$@" >&2
+## 警告
+log_warning () {
+  echo -e "${COLOR_BOLD_YELLOW}[WARN]${COLOR_RESET} [$(date '+%Y-%m-%d %H:%M:%S')] ${COLOR_YELLOW}$* ${COLOR_RESET}" >&2
+}
+
+## 错误
+log_error () {
+  echo -e "${COLOR_BOLD_RED}[ERROR] ${COLOR_RESET}[$(date '+%Y-%m-%d %H:%M:%S')] ${COLOR_RED}$* ${COLOR_RESET}" >&2
   exit 1
+}
+
+## 成功
+log_success () {
+  echo -e "${COLOR_BOLD_GREEN}[INFO]${COLOR_RESET} [$(date '+%Y-%m-%d %H:%M:%S')] ${COLOR_GREEN}$* ${COLOR_RESET}"
+}
+
+## 备份文件
+backup_file () {
+  local file="$1"
+  local backup="${file}.bak.$(date '+%Y%m%d_%H%M%S')"
+  
+  if [[ -f "$file" ]]; then
+    cp -rpf "$file" "$backup" || log_warning "备份 $file 失败"
+    log_info "已备份: $file -> $backup"
+  fi
+}
+
+## 循环提示
+confirm_action () {
+  local prompt="$1"
+  local response
+  
+  while true; do
+    read -rp "${prompt} (y/n): " response
+    case "${response,,}" in  # 转小写
+      y|yes) return 0 ;;
+      n|no) return 1 ;;
+      *) log_warning "请输入 y 或 n" ;;
+    esac
+  done
+}
+
+## 检查 root 权限
+check_root () {
+  if [[ "${EUID}" -ne 0 ]]; then
+    log_error "必须以 root 用户运行，请切换用户！"
+  fi
+}
+
+## 检查 CPU 架构
+check_cpu_arch () {
+  CPU_ARCH="$(arch)"
+  if [[ ${CPU_ARCH} != "x86_64" ]]; then
+    log_error "不支持的 CPU 架构！"
+  fi
+}
+
+## 检查发行版
+check_os_release () {
+  if [[ ! -f /etc/os-release ]]; then
+    log_error "无法检测操作系统！"
+  fi
+
+  source /etc/os-release
+
+  local OS_ID="${ID,,}"
+  local OS_NAME="${NAME,,}"
+  local OS_VERSION="${VERSION,,}"
+
+  log_info "发行版ID： ${OS_ID}"
+  log_info "发行版名称： ${OS_NAME}"
+  log_info "发行版版本号： ${OS_VERSION}"
+
+#  if [[ -n ${OS_ID} && -n ${OS_VERSION} && ${OS_ID} == "opensuse-leap" && ${OS_VERSION} == "16.0" ]]; then
+#    # openSUSE Leap 16.0
+#    if [[ ! -x $(command -v iptables 2>/dev/null) ]]; then
+#      log_error "openSUSE Leap 16.0 环境请先安装 iptables！(可运行【 zypper install -y iptables 】 命令安装，安装后请重启操作系统。)"
+#    fi
+#  fi
+}
+
+## 检查依赖命令
+check_command () {
+  if [[ ! -x $(command -v iptables 2>/dev/null) ]]; then
+    log_error "请先安装 iptables!"
+  fi
+  if [[ ! -x $(command -v tar 2>/dev/null) ]]; then
+    log_error "请先安装 tar!"
+  fi
+  if [[ "${NEED_OFFLINE_INSTALL}" == false ]]; then
+    if [[ ! -x $(command -v curl 2>/dev/null) ]]; then
+      log_error "请先安装 curl!"
+    fi
+    if [[ ! -x $(command -v wget 2>/dev/null) ]]; then
+      log_error "请先安装 wget!"
+    fi
+  fi
+}
+
+## 检查文件
+check_file () {
+  # 检查安装必须的文件
+  if [[ ! -e docker.service ]]; then
+    log_error "未找到【 docker.service 】文件！"
+  fi
+  if [[ ! -e docker.socket ]]; then
+    log_error "未找到【 docker.socket 】文件！"
+  fi
+  if [[ ! -e daemon.json ]]; then
+    log_error "未找到【 daemon.json 】文件！"
+  fi
+
+  # 离线安装时，检查是否有安装包
+  if [[ "${NEED_OFFLINE_INSTALL}" == true ]]; then
+    if [[ -z "${DOCKER_PACKAGE_NAME}" ]]; then
+      log_error "请在【 DOCKER_PACKAGE_NAME 】中（或通过【 -p 安装包名称 】）配置 Docker Engine 安装包名称，并确保安装包在本脚本的同级目录！"
+    fi
+    if [[ ! -e "${DOCKER_PACKAGE_NAME}" ]]; then
+      log_error "未在本脚本的同级目录找到 Docker Engine 安装包【 "${DOCKER_PACKAGE_NAME}" 】！"
+    fi
+
+    if [[ "${NEED_INSTALL_COMPOSE}" == true ]]; then
+      if [[ -z "${DOCKER_COMPOSE_PACKAGE_NAME}" ]]; then
+        log_error "请在【 DOCKER_COMPOSE_PACKAGE_NAME 】中（或通过【 -n 安装包名称 】）配置 Docker Compose 安装包名称，并确保安装包在本脚本的同级目录！"
+      fi
+      if [[ ! -e "${DOCKER_COMPOSE_PACKAGE_NAME}" ]]; then
+        log_error "未在本脚本的同级目录找到 Docker Compose 安装包【 "${DOCKER_COMPOSE_PACKAGE_NAME}" 】！"
+      fi
+    fi
+  fi
+}
+
+## 检查网络
+check_net () {
+  # 在线安装时，检查是否能正常获取安装包
+  if [[ "${NEED_OFFLINE_INSTALL}" == false ]]; then
+    if [[ -z "${DOCKER_VERSION}" ]]; then
+      log_error "请在【 DOCKER_VERSION 】中配置 Docker Engine 版本号！"
+    fi
+    if [[ -z "${DOCKER_PACKAGE_URL}" ]]; then
+      log_error "请在【 DOCKER_PACKAGE_URL 】中配置 Docker Engine 安装包下载路径！"
+    fi
+
+    local URL="${DOCKER_PACKAGE_URL}"
+    local TIMEOUT="${2:-10}"
+    local HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout "$TIMEOUT" "$URL")
+    log_debug $URL $HTTP_CODE
+    case "$HTTP_CODE" in
+      400|401|403|404|405)
+        log_error "无法获取 Docker Engine 安装包： 客户端错误（4xx）！"
+        ;;
+      500|502|503|504)
+        log_error "无法获取 Docker Engine 安装包： 服务器错误（5xx）！"
+        ;;
+      000)
+        log_error "无法获取 Docker Engine 安装包： 无法连接！"
+        ;;
+    esac
+
+
+    if [[ "${NEED_INSTALL_COMPOSE}" == true ]]; then
+      if [[ -z "${DOCKER_COMPOSE_VERSION}" ]]; then
+        log_error "请在【 DOCKER_COMPOSE_VERSION 】中配置 Docker Compose 版本号！"
+      fi
+      if [[ -z "${DOCKER_COMPOSE_PACKAGE_URL}" ]]; then
+        log_error "请在【 DOCKER_COMPOSE_PACKAGE_URL 】中配置 Docker Compose 安装包下载路径！"
+      fi
+
+      URL="${DOCKER_COMPOSE_PACKAGE_URL}"
+      TIMEOUT="${2:-10}"
+      HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout "$TIMEOUT" "$URL")
+      log_debug $URL $HTTP_CODE
+      case "$HTTP_CODE" in
+        400|401|403|404|405)
+          log_error "无法获取 Docker Compose 安装包： 客户端错误（4xx）！"
+          ;;
+        500|502|503|504)
+          log_error "无法获取 Docker Compose 安装包： 服务器错误（5xx）！"
+          ;;
+        000)
+          log_error "无法获取 Docker Compose 安装包： 无法连接！"
+          ;;
+      esac
+    fi
+
+  fi
+}
+
+## 安装检查
+install_check () {
+  log_info '------------------------------ 开始校验安装环境... ------------------------------'
+
+  check_cpu_arch
+  check_os_release
+  check_command
+  check_file
+  #check_net
+
+  log_info '------------------------------ 安装环境校验完成! ------------------------------'
+}
+
+## 版本号
+version () {
+  echo -e "${COLOR_BOLD_GREEN}docker-tools ${COLOR_GREEN}${VERSION} ${COLOR_BLUE}（ HTY1024 ）"
 }
 
 ## 帮助信息
 help () {
   version
-  echo ''
-  echo '使用方式:  docker-tools 参数 选项'
-  echo '参数说明：'
-  echo '  -v： Docker 版本（可选，默认安装 28.2.1 版本）'
-  echo '  -i： Docker 安装目录（可选，默认为 /opt/docker/bin）'
-  echo '  -d： Docker 数据目录（可选，默认为 /opt/docker/data）'
-  echo '  -p： Docker 安装包名称（可选，仅离线安装时使用，默认为在线安装）'
-  echo '  -c： Docker Compose 版本（可选，默认安装 v2.36.2 版本）'
-  echo '  -n： Docker Compose 安装包名称（可选，仅离线安装时使用，默认为在线安装）'
-  echo '  -a： 仅安装 Docker Engine（可选，默认安装 Docker Engine 和 Docker Compose ）'
-  echo '  -b： 仅安装 Docker Compose（可选，默认安装 Docker Engine 和 Docker Compose ）'
-  echo '  -s： 启用 Docker Swarm（可选，默认不启用 ）'
-  echo '  -r： Docker Swarm 角色（可选，默认 manager，可选 manager、worker ）'
-  echo '  -m： Docker Swarm Manager IP（可选，默认 127.0.0.1 ）'
-  echo '  -t： Docker Swarm Token（当角色为 worker 时必选 ）'
-  echo '选项说明：'
-  echo '  version： 查看工具版本'
-  echo '  install： 安装 Docker'
-  echo '  uninstall： 卸载 Docker'
-  echo '  start： 启动 Docker'
-  echo '  stop： 停止 Docker'
-  echo '  restart： 重启 Docker'
-  echo '  enable： 设置 Docker 开机自启动'
-  echo '  disable： 取消 Docker 开机自启动'
-  echo '  update： 更新 Docker 版本'
-  echo '  swarm： 设置 Docker Swarm'
-  echo '  info： 查看 Docker 信息'
-  echo '示例：'
-  echo '  安装 Docker （使用默认配置） ： docker-tools install'
-  echo '  安装 Docker （使用默认配置（指定版本在线安装）） ： docker-tools -v 28.2.1 -c v2.36.2 install'
-  echo '  安装 Docker （使用默认配置（指定版本离线安装）） ： docker-tool -p docker-28.2.1.tgz -n docker-compose-linux-x86_64 install'
-  echo '  安装 Docker （使用自定义配置） ： docker-tools -v 28.2.1 -i /data/docker/bin -d /data/docker/data -p docker-28.2.1.tgz -c v2.36.2 -n docker-compose-linux-x86_64 install'
-  echo '  安装 Docker （同时作为 manager 节点启用 Swarm） ： docker-tools -s install'
-  echo '  安装 Docker （同时作为 worker 节点启用 Swarm） ： docker-tools -s -r worker -m 192.168.0.100 -t 123456 install'
-  echo '  安装 Docker （仅安装 Docker Engine） ： docker-tools -oe install'
-  echo '  安装 Docker （仅安装 Docker Compose） ： docker-tools -oc install'
-  echo '  卸载 Docker （使用默认配置） ： docker-tools uninstall'
-  echo '  卸载 Docker （使用自定义配置） ： docker-tools -v 28.2.1 -i /data/docker/bin -d /data/docker/data -p docker-28.2.1.tgz -c v2.36.2 -n docker-compose-linux-x86_64 uninstall'
-  echo '  重启 Docker ： docker-tools restart'
-  echo '  设置 Docker 开机自启动 ： docker-tools enable'
-  echo '  取消 Docker 开机自启动 ： docker-tools disable'
-  echo '  设置 Docker Swarm（manager） ： docker-tools swarm'
-  echo '  设置 Docker Swarm（worker） ： docker-tools -r worker -m 192.168.0.100 -t 123456 swarm'
-  echo '  查看 Docker 信息 ： docker-tools info'
-}
-
-## 版本号
-version () {
- echo 'docker-tools '${VERSION}'（ HTY1024 ）'
+  echo -e ""
+  echo -e "${COLOR_BOLD_GREEN}使用方式:  docker-tools 参数 选项"
+  echo -e "${COLOR_BOLD_BLUE}参数说明："
+  echo -e "  ${COLOR_BLUE}-v： Docker 版本（可选，默认安装 28.2.1 版本）"
+  echo -e "  ${COLOR_BLUE}-i： Docker 安装目录（可选，默认为 /opt/docker/bin）"
+  echo -e "  ${COLOR_BLUE}-d： Docker 数据目录（可选，默认为 /opt/docker/data）"
+  echo -e "  ${COLOR_BLUE}-p： Docker 安装包名称（可选，仅离线安装时使用，默认为在线安装）"
+  echo -e "  ${COLOR_BLUE}-c： Docker Compose 版本（可选，默认安装 v2.36.2 版本）"
+  echo -e "  ${COLOR_BLUE}-n： Docker Compose 安装包名称（可选，仅离线安装时使用，默认为在线安装）"
+  echo -e "  ${COLOR_BLUE}-a： 仅安装 Docker Engine（可选，默认安装 Docker Engine 和 Docker Compose ）"
+  echo -e "  ${COLOR_BLUE}-b： 仅安装 Docker Compose（可选，默认安装 Docker Engine 和 Docker Compose ）"
+  echo -e "  ${COLOR_BLUE}-s： 启用 Docker Swarm（可选，默认不启用 ）"
+  echo -e "  ${COLOR_BLUE}-r： Docker Swarm 角色（可选，默认 manager，可选 manager、worker ）"
+  echo -e "  ${COLOR_BLUE}-m： Docker Swarm Manager IP（可选，默认 127.0.0.1 ）"
+  echo -e "  ${COLOR_BLUE}-t： Docker Swarm Token（当角色为 worker 时必选 ）"
+  echo -e "${COLOR_BOLD_CYAN}选项说明："
+  echo -e "  ${COLOR_CYAN}version： 查看工具版本"
+  echo -e "  ${COLOR_CYAN}install： 安装 Docker"
+  echo -e "  ${COLOR_CYAN}uninstall： 卸载 Docker"
+  echo -e "  ${COLOR_CYAN}start： 启动 Docker"
+  echo -e "  ${COLOR_CYAN}stop： 停止 Docker"
+  echo -e "  ${COLOR_CYAN}restart： 重启 Docker"
+  echo -e "  ${COLOR_CYAN}enable： 设置 Docker 开机自启动"
+  echo -e "  ${COLOR_CYAN}disable： 取消 Docker 开机自启动"
+  echo -e "  ${COLOR_CYAN}update： 更新 Docker 版本"
+  echo -e "  ${COLOR_CYAN}swarm： 设置 Docker Swarm"
+  echo -e "  ${COLOR_CYAN}info： 查看 Docker 信息"
+  echo -e "${COLOR_BOLD_GREEN}示例："
+  echo -e "  ${COLOR_GREEN}安装 Docker （使用默认配置） ： docker-tools install"
+  echo -e "  ${COLOR_GREEN}安装 Docker （使用默认配置（指定版本在线安装）） ： docker-tools -v 28.2.1 -c v2.36.2 install"
+  echo -e "  ${COLOR_GREEN}安装 Docker （使用默认配置（指定版本离线安装）） ： docker-tool -p docker-28.2.1.tgz -n docker-compose-linux-x86_64 install"
+  echo -e "  ${COLOR_GREEN}安装 Docker （使用自定义配置） ： docker-tools -v 28.2.1 -i /data/docker/bin -d /data/docker/data -p docker-28.2.1.tgz -c v2.36.2 -n docker-compose-linux-x86_64 install"
+  echo -e "  ${COLOR_GREEN}安装 Docker （同时作为 manager 节点启用 Swarm） ： docker-tools -s install"
+  echo -e "  ${COLOR_GREEN}安装 Docker （同时作为 worker 节点启用 Swarm） ： docker-tools -s -r worker -m 192.168.0.100 -t 123456 install"
+  echo -e "  ${COLOR_GREEN}安装 Docker （仅安装 Docker Engine） ： docker-tools -oe install"
+  echo -e "  ${COLOR_GREEN}安装 Docker （仅安装 Docker Compose） ： docker-tools -oc install"
+  echo -e "  ${COLOR_GREEN}卸载 Docker （使用默认配置） ： docker-tools uninstall"
+  echo -e "  ${COLOR_GREEN}卸载 Docker （使用自定义配置） ： docker-tools -v 28.2.1 -i /data/docker/bin -d /data/docker/data -p docker-28.2.1.tgz -c v2.36.2 -n docker-compose-linux-x86_64 uninstall"
+  echo -e "  ${COLOR_GREEN}重启 Docker ： docker-tools restart"
+  echo -e "  ${COLOR_GREEN}设置 Docker 开机自启动 ： docker-tools enable"
+  echo -e "  ${COLOR_GREEN}取消 Docker 开机自启动 ： docker-tools disable"
+  echo -e "  ${COLOR_GREEN}设置 Docker Swarm（manager） ： docker-tools swarm"
+  echo -e "  ${COLOR_GREEN}设置 Docker Swarm（worker） ： docker-tools -r worker -m 192.168.0.100 -t 123456 swarm"
+  echo -e "  ${COLOR_GREEN}查看 Docker 信息 ： docker-tools info"
 }
 
 ## 查询 CPU 架构
 search_cpu_arch () {
-  info '------------------------------ 开始设置 CPU 架构... ------------------------------'
+  log_info '------------------------------ 开始设置 CPU 架构... ------------------------------'
 
-  CPU_ARCH=`arch`
+  CPU_ARCH="$(arch)"
 
-  info '------------------------------ CPU 架构设置完成! ------------------------------'
+  if [[ ${CPU_ARCH} != "x86_64" ]]; then
+    log_error "不支持的 CPU 架构！"
+  fi
+
+  log_info '------------------------------ CPU 架构设置完成! ------------------------------'
 }
 
 ## 创建目录
 create_dir () {
-  info '------------------------------ 开始创建相关目录... ------------------------------'
+  log_info '------------------------------ 开始创建相关目录... ------------------------------'
 
-  mkdir -pv ${DOCKER_INSTALL_DIR}
-  mkdir -pv ${DOCKER_DATA_DIR}
+  mkdir -pv "${DOCKER_INSTALL_DIR}"
+  mkdir -pv "${DOCKER_DATA_DIR}"
   mkdir -pv /etc/docker
 
-  info '------------------------------ 所需目录创建完成! ------------------------------'
+  log_info '------------------------------ 所需目录创建完成! ------------------------------'
 }
 
 ## 删除目录
 delete_dir () {
-  info '------------------------------ 开始删除相关目录... ------------------------------'
+  log_info '------------------------------ 开始删除相关目录... ------------------------------'
 
-  rm -rf ${DOCKER_INSTALL_DIR}
-  rm -rf ${DOCKER_DATA_DIR}
+  rm -rf "${DOCKER_INSTALL_DIR}"
+  rm -rf "${DOCKER_DATA_DIR}"
   rm -rf /etc/docker
 
-  info '------------------------------ 相关目录删除完成! ------------------------------'
+  log_info '------------------------------ 相关目录删除完成! ------------------------------'
 }
 
 ## 创建用户
 create_user () {
-  info '------------------------------ 开始创建 Docker 用户... ------------------------------'
+  log_info '------------------------------ 开始创建 Docker 用户... ------------------------------'
+ 
+  if getent group docker >/dev/null 2>&1; then
+    log_info "用户组 docker 已存在"
+  else
+    groupadd -r -g 1001 docker || log_error "创建用户组失败"
+  fi
   
-  groupadd -r -g 1001 docker
-  useradd -r -g docker -u 1001 -d /home/docker -s /bin/bash docker
+  if id docker >/dev/null 2>&1; then
+    log_info "用户 docker 已存在"
+  else
+    useradd -r -g docker -u 1001 -d /home/docker -s /bin/bash docker || log_error "创建用户失败"
+  fi 
 
-  info '------------------------------ Docker 用户创建完成! ------------------------------'
+  log_info '------------------------------ Docker 用户创建完成! ------------------------------'
 }
 
 ## 删除用户
 delete_user () {
-  info '------------------------------ 开始删除 Docker 用户... ------------------------------'
+  log_info '------------------------------ 开始删除 Docker 用户... ------------------------------'
 
-  groupdel docker
-  userdel docker
+  if id docker >/dev/null 2>&1; then
+    userdel -r docker 2>/dev/null || log_warning "删除用户失败（可能不存在）"
+  else
+    log_info "用户 docker 不存在，跳过删除"
+  fi
 
-  info '------------------------------ Docker 用户删除完成! ------------------------------'
+  if getent group docker >/dev/null 2>&1; then
+    groupdel docker 2>/dev/null || log_warning "删除用户组失败（可能被占用）"
+  else
+    log_info "用户组 docker 不存在，跳过删除"
+  fi
+
+  log_info '------------------------------ Docker 用户删除完成! ------------------------------'
 }
 
 
 ## 配置系统参数
 config_system () {
-  info '------------------------------ 开始配置系统参数... ------------------------------'
+  log_info '------------------------------ 开始配置系统参数... ------------------------------'
 
-  modprobe br_netfilter
-  echo 'net.bridge.bridge-nf-call-ip6tables = 1' > /etc/sysctl.d/docker.conf
-  echo 'net.bridge.bridge-nf-call-iptables = 1' >> /etc/sysctl.d/docker.conf
-  echo 'net.ipv4.ip_forward = 1' >> /etc/sysctl.d/docker.conf
-  sysctl --system
+  if ! lsmod | grep -q br_netfilter; then
+    modprobe br_netfilter || log_error "加载 br_netfilter 模块失败"
+  fi
 
-  info '------------------------------ 系统参数配置完成! ------------------------------'
+  [[ -f /etc/sysctl.d/docker.conf ]] && backup_file /etc/sysctl.d/docker.conf
+
+  cat > /etc/sysctl.d/docker.conf <<EOF
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+EOF
+
+  sysctl --system || log_error "应用系统参数失败"
+
+  log_info '------------------------------ 系统参数配置完成! ------------------------------'
 }
 
 ## 移除参数
 remove_system_config () {
-  info '------------------------------ 开始删除系统参数... ------------------------------'
+  log_info '------------------------------ 开始删除系统参数... ------------------------------'
 
   rm -rf /etc/sysctl.d/docker.conf
   sysctl --system
 
-  info '------------------------------ 系统参数删除完成! ------------------------------'
+  log_info '------------------------------ 系统参数删除完成! ------------------------------'
 }
 
 ## 下载 Docker 安装包
 download_docker_engine_package () {
-  info '------------------------------ 开始下载 Docker 安装包... ------------------------------'
+  log_info '------------------------------ 开始下载 Docker 安装包... ------------------------------'
 
-  wget ${DOCKER_PACKAGE_URL}/${CPU_ARCH}/docker-${DOCKER_VERSION}.tgz
-  DOCKER_PACKAGE_NAME=docker-${DOCKER_VERSION}.tgz
+  wget "${DOCKER_PACKAGE_URL}"/"${CPU_ARCH}"/docker-"${DOCKER_VERSION}".tgz
+  DOCKER_PACKAGE_NAME=docker-"${DOCKER_VERSION}".tgz
 
-  info '------------------------------ Docker 安装包下载完成! ------------------------------'
+  log_info '------------------------------ Docker 安装包下载完成! ------------------------------'
 }
 
 ## 删除 Docker 安装包
 remove_docker_engine_package () {
-  info '------------------------------ 开始删除 Docker 安装包... ------------------------------'
+  log_info '------------------------------ 开始删除 Docker 安装包... ------------------------------'
 
-  rm -rf ${DOCKER_PACKAGE_NAME}
+  rm -rf "${DOCKER_PACKAGE_NAME}"
 
-  info '------------------------------ Docker 安装包删除完成! ------------------------------'
+  log_info '------------------------------ Docker 安装包删除完成! ------------------------------'
 }
 
 ## 下载 Docker Compose 安装包
 download_docker_compose_package () {
-  info '------------------------------ 开始下载 Docker Compose 安装包... ------------------------------'
+  log_info '------------------------------ 开始下载 Docker Compose 安装包... ------------------------------'
 
-  wget ${DOCKER_COMPOSE_PACKAGE_URL}/${DOCKER_COMPOSE_VERSION}/docker-compose-linux-${CPU_ARCH}
-  DOCKER_COMPOSE_PACKAGE_NAME=docker-compose-linux-${CPU_ARCH}
+  wget "${DOCKER_COMPOSE_PACKAGE_URL}"/"${DOCKER_COMPOSE_VERSION}"/docker-compose-linux-"${CPU_ARCH}"
+  DOCKER_COMPOSE_PACKAGE_NAME=docker-compose-linux-"${CPU_ARCH}"
 
-  info '------------------------------ Docker Compose 安装包下载完成! ------------------------------'
+  log_info '------------------------------ Docker Compose 安装包下载完成! ------------------------------'
 }
 
 ## 删除 Docker Compose 安装包
 remove_docker_compose_package () {
-  info '------------------------------ 开始删除 Docker Compose 安装包... ------------------------------'
+  log_info '------------------------------ 开始删除 Docker Compose 安装包... ------------------------------'
 
-  rm -rf ${DOCKER_COMPOSE_PACKAGE_NAME}
+  rm -rf "${DOCKER_COMPOSE_PACKAGE_NAME}"
 
-  info '------------------------------ Docker Compose 安装包删除完成! ------------------------------'
+  log_info '------------------------------ Docker Compose 安装包删除完成! ------------------------------'
 }
 
 ## 安装 Docker Engine
 install_docker_engine () {
-  info '------------------------------ 开始安装 Docker Engine... ------------------------------'
+  log_info '------------------------------ 开始安装 Docker Engine... ------------------------------'
 
-  tar zxvf ${DOCKER_PACKAGE_NAME} -C ${DOCKER_INSTALL_DIR} --strip-components 1
+  tar zxvf "${DOCKER_PACKAGE_NAME}" -C "${DOCKER_INSTALL_DIR}" --strip-components 1
 
-  info '------------------------------ Docker Engine 安装完成! ------------------------------'
+  log_info '------------------------------ Docker Engine 安装完成! ------------------------------'
 }
 
 ## 备份当前 Docker Engine () {
 backup_docker_engine () {
-  info '------------------------------ 开始备份 Docker Engine... ------------------------------'
+  log_info '------------------------------ 开始备份 Docker Engine... ------------------------------'
 
-  cp -rpf ${DOCKER_INSTALL_DIR} ${DOCKER_INSTALL_DIR}'_bak_'${DATETIME}
+  backup_file "${DOCKER_INSTALL_DIR}"
 
-  info '------------------------------ Docker Engine 备份完成! ------------------------------'
+  log_info '------------------------------ Docker Engine 备份完成! ------------------------------'
 }
 
 ## 安装 Dokcer Compose
 install_docker_compose () {
-  info '------------------------------ 开始安装 Docker Compose... ------------------------------'
+  log_info '------------------------------ 开始安装 Docker Compose... ------------------------------'
 
-  cp -rpf ./${DOCKER_COMPOSE_PACKAGE_NAME} ${DOCKER_INSTALL_DIR}/docker-compose
-  chown docker.docker ${DOCKER_INSTALL_DIR}/docker-compose
-  chmod +x ${DOCKER_INSTALL_DIR}/docker-compose
+  cp -rpf ./"${DOCKER_COMPOSE_PACKAGE_NAME}" "${DOCKER_INSTALL_DIR}"/docker-compose
+  chown docker.docker "${DOCKER_INSTALL_DIR}"/docker-compose
+  chmod +x "${DOCKER_INSTALL_DIR}"/docker-compose
 
-  info '------------------------------ Docker Compose 安装完成! ------------------------------'
+  log_info '------------------------------ Docker Compose 安装完成! ------------------------------'
 }
 
 ## 备份当前 Docker Coimpose 
 backup_docker_compose () {
-  info '------------------------------ 开始备份 Docker Compose... ------------------------------'
+  log_info '------------------------------ 开始备份 Docker Compose... ------------------------------'
 
-  mkdir -pv ${DOCKER_INSTALL_DIR}'_bak_'${DATETIME}
-  cp -rpf ${DOCKER_INSTALL_DIR}/docker-compose ${DOCKER_INSTALL_DIR}'_bak_'${DATETIME}/docker-compose
+  mkdir -pv "${DOCKER_INSTALL_DIR}"'_bak_'"${DATETIME}"
+  cp -rpf "${DOCKER_INSTALL_DIR}"/docker-compose "${DOCKER_INSTALL_DIR}"'_bak_'"${DATETIME}"/docker-compose
 
-  info '------------------------------ Docker Compose 备份完成! ------------------------------'
+  log_info '------------------------------ Docker Compose 备份完成! ------------------------------'
 }
 
 ## 配置环境变量
 config_env () {
-  info '------------------------------ 开始配置环境变量... ------------------------------'
+  log_info '------------------------------ 开始配置环境变量... ------------------------------'
 
-  cp -rpf ~/.bashrc ~/.bashrc.bak.${DATETIME}
+  backup_file ~/.bashrc
   echo '# Docker Env Begin' >> ~/.bashrc
-  echo 'export DOCKER_HOME='${DOCKER_INSTALL_DIR} >> ~/.bashrc
+  echo 'export DOCKER_HOME='"${DOCKER_INSTALL_DIR}" >> ~/.bashrc
   echo 'export PATH=$PATH:$DOCKER_HOME' >> ~/.bashrc
   echo '# Docker Env End' >> ~/.bashrc
   source ~/.bashrc
+  log_info '请手动执行【 source ~/.bashrc 】更新环境变量！'
 
-  cp -rpf /etc/profile /etc/profile.bak.${DATETIME}
+  backup_file /etc/profile
   echo '# Docker Env Begin' >> /etc/profile
-  echo 'export DOCKER_HOME='${DOCKER_INSTALL_DIR} >> /etc/profile
+  echo 'export DOCKER_HOME='"${DOCKER_INSTALL_DIR}" >> /etc/profile
   echo 'export PATH=$PATH:$DOCKER_HOME' >> /etc/profile
   echo '# Docker Env End' >> /etc/profile
-  source /etc/profile
+  #source /etc/profile
+  log_info '请手动执行【 source /etc/profile 】更新环境变量！'
 
-  info '------------------------------ 环境变量配置完成! ------------------------------'
+  log_info '------------------------------ 环境变量配置完成! ------------------------------'
 }
 
 ## 移除环境变量
 remove_env () {
-  info '------------------------------ 开始移除环境变量... ------------------------------'
+  log_info '------------------------------ 开始移除环境变量... ------------------------------'
 
-  cp -rpf ~/.bashrc ~/.bashrc.bak.${DATETIME}
+  backup_file ~/.bashrc
   sed -i 's/# Docker Env Begin//g' ~/.bashrc
-  sed -i 's#export DOCKER_HOME='${DOCKER_INSTALL_DIR}'##g' ~/.bashrc
+  sed -i 's#export DOCKER_HOME='"${DOCKER_INSTALL_DIR}"'##g' ~/.bashrc
   sed -i 's/export PATH=$PATH:$DOCKER_HOME//g' ~/.bashrc
   sed -i 's/# Docker Env End//g' ~/.bashrc
   source ~/.bashrc
+  log_info '请手动执行 source ~/.bashrc 更新环境变量！'
 
-  cp -rpf /etc/profile /etc/profile.bak.${DATETIME}
+  backup_file /etc/profile
   sed -i 's/# Docker Env Begin//g' /etc/profile
-  sed -i 's#export DOCKER_HOME='${DOCKER_INSTALL_DIR}'##g' /etc/profile
+  sed -i 's#export DOCKER_HOME='"${DOCKER_INSTALL_DIR}"'##g' /etc/profile
   sed -i 's/export PATH=$PATH:$DOCKER_HOME//g' /etc/profile
   sed -i 's/# Docker Env End//g' /etc/profile
-  source /etc/profile
+  #source /etc/profile
+  log_info '请手动执行 source /etc/profile 更新环境变量！'
 
-  info '------------------------------ 环境变量移除完成! ------------------------------'
+  log_info '------------------------------ 环境变量移除完成! ------------------------------'
 }
 
 ## 配置系统服务
 config_service () {
-  info '------------------------------ 开始配置系统服务... ------------------------------'
+  log_info '------------------------------ 开始配置系统服务... ------------------------------'
 
-  cp -rpf docker.service /usr/lib/systemd/system/docker.service
-  cp -rpf docker.socket /usr/lib/systemd/system/docker.socket
-  sed -i 's#{{DOCKER_BIN_DIR}}#'${DOCKER_INSTALL_DIR}'#g' /usr/lib/systemd/system/docker.service
+  cp -rpf docker.service "${SYSTEMD_DIR}"/docker.service
+  cp -rpf docker.socket "${SYSTEMD_DIR}"/docker.socket
+  sed -i 's#{{DOCKER_BIN_DIR}}#'"${DOCKER_INSTALL_DIR}"'#g' "${SYSTEMD_DIR}"/docker.service
   systemctl daemon-reload
 
-  info '------------------------------ 系统服务配置完成! ------------------------------'
+  log_info '------------------------------ 系统服务配置完成! ------------------------------'
 }
 
 ## 移除系统服务
 remove_service () {
-  info '------------------------------ 开始移除系统服务... ------------------------------'
+  log_info '------------------------------ 开始移除系统服务... ------------------------------'
 
-  rm -rf /usr/lib/systemd/system/docker.service
-  rm -rf /usr/lib/systemd/system/docker.socket
+  rm -rf "${SYSTEMD_DIR}"/docker.service
+  rm -rf "${SYSTEMD_DIR}"/docker.socket
   systemctl daemon-reload
 
-  info '------------------------------ 系统服务移除完成! ------------------------------'
+  log_info '------------------------------ 系统服务移除完成! ------------------------------'
 }
 
 ## 配置 Docker 
 config_docker_engine () {
-  info '------------------------------ 开始配置 Docker... ------------------------------'
+  log_info '------------------------------ 开始配置 Docker... ------------------------------'
 
   cp -rpf daemon.json /etc/docker/daemon.json
-  sed -i 's#{{DOCKER_DATA_DIR}}#'${DOCKER_DATA_DIR}'#g' /etc/docker/daemon.json
+  sed -i 's#{{DOCKER_DATA_DIR}}#'"${DOCKER_DATA_DIR}"'#g' /etc/docker/daemon.json
 
-  if [ ${NEED_ENABLE_DOCKER_SWARM} == "false" ]; then
+  if [[ "${NEED_ENABLE_DOCKER_SWARM}" == false ]]; then
     sed -i 's#{{DOCKER_LIVE_RESTORE}}#true#g' /etc/docker/daemon.json
   fi
-  if [ ${NEED_ENABLE_DOCKER_SWARM} == "true" ]; then
+  if [[ "${NEED_ENABLE_DOCKER_SWARM}" == true ]]; then
     sed -i 's#{{DOCKER_LIVE_RESTORE}}#false#g' /etc/docker/daemon.json
   fi
 
-  chown -R docker.docker ${DOCKER_INSTALL_DIR}
-  chmod -R 755 ${DOCKER_INSTALL_DIR}
-  chown -R docker.docker ${DOCKER_DATA_DIR}
-  chmod -R 755 ${DOCKER_DATA_DIR}
+  chown -R docker.docker "${DOCKER_INSTALL_DIR}"
+  chmod -R 755 "${DOCKER_INSTALL_DIR}"
+  chown -R docker.docker "${DOCKER_DATA_DIR}"
+  chmod -R 755 "${DOCKER_DATA_DIR}"
 
-  info '------------------------------ Docker 配置完成! ------------------------------'
+  log_info '------------------------------ Docker 配置完成! ------------------------------'
 }
 
 ## 启动 Docker
 start_docker () {
-  info '------------------------------ 开始启动 Docker... ------------------------------'
+  log_info '------------------------------ 开始启动 Docker... ------------------------------'
 
   systemctl start docker
 
-  info '------------------------------ Docker 启动完成! ------------------------------'
+  log_info '------------------------------ Docker 启动完成! ------------------------------'
 }
 
 ## 停止 Docker
 stop_docker () {
-  info '------------------------------ 开始停止 Docker... ------------------------------'
+  log_info '------------------------------ 开始停止 Docker... ------------------------------'
 
   systemctl stop docker
 
-  info '------------------------------ Docker 停止完成! ------------------------------'
+  log_info '------------------------------ Docker 停止完成! ------------------------------'
 }
 
 ## 重启 Docker
@@ -379,40 +629,39 @@ restart_docker () {
 
 ## 设置 Docker 自启动
 enable_docker () {
-  info '------------------------------ 开始设置 Docker 自启动... ------------------------------'
+  log_info '------------------------------ 开始设置 Docker 自启动... ------------------------------'
 
   systemctl enable docker
 
-  info '------------------------------ Docker 自启动设置完成! ------------------------------'
+  log_info '------------------------------ Docker 自启动设置完成! ------------------------------'
 }
 
 ## 取消 Docker 自启动
 disable_docker () {
-  info '------------------------------ 开始取消 Docker 自启动... ------------------------------'
+  log_info '------------------------------ 开始取消 Docker 自启动... ------------------------------'
 
   systemctl disable docker
 
-  info '------------------------------ Docker 自启动取消完成! ------------------------------'
+  log_info '------------------------------ Docker 自启动取消完成! ------------------------------'
 }
 
 ## 查询 Dokcer 信息
 info_docker () {
-  info '------------------------------ 开始查询 Docker 信息... ------------------------------'
+  log_info '------------------------------ 开始查询 Docker 信息... ------------------------------'
   
   docker info
   
-  info '------------------------------ Docker 信息查询完成! ------------------------------'
+  log_info '------------------------------ Docker 信息查询完成! ------------------------------'
 }
 
 ## 安装 Docker Engine
 only_install_docker_engine () {
-  info '------------------------------ 开始安装 Docker Engine... ------------------------------'
+  log_info '------------------------------ 开始安装 Docker Engine... ------------------------------'
 
-  search_cpu_arch
   create_dir
   create_user
   config_system
-  if [ ${NEED_OFFLINE_INSTALL} == "false" ];then
+  if [[ "${NEED_OFFLINE_INSTALL}" == false ]];then
     download_docker_engine_package 
   fi
   install_docker_engine
@@ -420,35 +669,33 @@ only_install_docker_engine () {
   config_service
   config_docker_engine
   start_docker
-  if [ ${NEED_ENABLE_DOCKER} == "true" ];then
+  if [[ "${NEED_ENABLE_DOCKER}" == true ]];then
     enable_docker
   fi
   info_docker
 
-  info '------------------------------ Docker Engine 安装完成! ------------------------------'
+  log_info '------------------------------ Docker Engine 安装完成! ------------------------------'
 }
 
 ## 安装 Docker Compose
 only_install_docker_compose () {
-  info '------------------------------ 开始安装 Docker Compose... ------------------------------'
+  log_info '------------------------------ 开始安装 Docker Compose... ------------------------------'
 
-  search_cpu_arch
-  if [ ${NEED_OFFLINE_INSTALL} == "false" ]; then
+  if [[ "${NEED_OFFLINE_INSTALL}" == false ]]; then
     download_docker_compose_package
   fi
   install_docker_compose
   restart_docker
   info_docker
 
-  info '------------------------------ Docker Conpose 安装完成! ------------------------------'
+  log_info '------------------------------ Docker Conpose 安装完成! ------------------------------'
 }
 
 ## 更新 Dokcer Engine 
 only_update_docker_engine () {
-  info '------------------------------ 开始更新 Docker Engine... ------------------------------'
+  log_info '------------------------------ 开始更新 Docker Engine... ------------------------------'
 
-  search_cpu_arch
-  if [ ${NEED_OFFLINE_INSTALL} == "false" ];then
+  if [[ "${NEED_OFFLINE_INSTALL}" == false ]];then
     download_docker_engine_package
   fi
   disable_docker
@@ -456,20 +703,19 @@ only_update_docker_engine () {
   backup_docker_engine
   install_docker_engine
   start_docker
-  if [ ${NEED_ENABLE_DOCKER} == "true" ];then
+  if [[ "${NEED_ENABLE_DOCKER}" == true ]];then
     enable_docker
   fi
   info_docker
 
-  info '------------------------------ Docker Engine 更新完成! ------------------------------'
+  log_info '------------------------------ Docker Engine 更新完成! ------------------------------'
 }
 
 ## 更新 Dokcer Compose
 only_update_docker_compose () {
-  info '------------------------------ 开始更新 Docker Compose... ------------------------------'
+  log_info '------------------------------ 开始更新 Docker Compose... ------------------------------'
 
-  search_cpu_arch
-  if [ ${NEED_OFFLINE_INSTALL} == "false" ]; then
+  if [[ "${NEED_OFFLINE_INSTALL}" == false ]]; then
     download_docker_compose_package
   fi
   backup_docker_compose
@@ -477,245 +723,218 @@ only_update_docker_compose () {
   restart_docker
   info_docker
 
-  info '------------------------------ Docker Conpose 更新完成! ------------------------------'
+  log_info '------------------------------ Docker Conpose 更新完成! ------------------------------'
 }
 
 ## 启用 Docker Swarm
 only_enable_docker_swarm () {
-  info '------------------------------ 开始启用 Docker Swarm... ------------------------------'
+  log_info '------------------------------ 开始启用 Docker Swarm... ------------------------------'
 
   sed -i 's#"live-restore": true#"live-restore": false#g' /etc/docker/daemon.json
   restart_docker
 
-  if [ ${DOCKER_SWARM_ROLE} == "manager" ]; then
-    docker swarm init --advertise-addr ${DOCKER_SWARM_MANAGER_IP}
+  if [ "${DOCKER_SWARM_ROLE}" == "manager" ]; then
+    docker swarm init --advertise-addr "${DOCKER_SWARM_MANAGER_IP}"
   fi
-  if [ ${DOCKER_SWARM_ROLE} == "worker" ]; then
-    docker swarm join --token ${DOCKER_SWARM_TOKEN} ${DOCKER_SWARM_MANAGER_IP}:2377
+  if [ "${DOCKER_SWARM_ROLE}" == "worker" ]; then
+    docker swarm join --token "${DOCKER_SWARM_TOKEN}" "${DOCKER_SWARM_MANAGER_IP}":2377
   fi
 
-  info '------------------------------ Docker Swarm 启用完成! ------------------------------'
+  log_info '------------------------------ Docker Swarm 启用完成! ------------------------------'
 }
 
 ## 安装 Docker
 install () {
-  echo '===================================================================================================='
-  echo `date +%Y-%m-%d` `date +%H:%M:%S`
-  echo '============================== 开始安装 Docker ...... =============================='
+  log_info '===================================================================================================='
+  log_info "$(date '+%Y-%m-%d %H:%M:%S')"
+  log_info '============================== 开始安装 Docker ...... =============================='
 
-  echo '安装参数如下 ：'
-  echo 'CPU 架构 ： '${CPU_ARCH}
-  echo 'Docker 安装目录 ： '${DOCKER_INSTALL_DIR}
-  echo 'Docker 数据目录 ： '${DOCKER_DATA_DIR}
-  echo '是否离线安装 ： '${NEED_OFFLINE_INSTALL}
-  echo '是否安装 Docker Engine ： '${NEED_INSTALL_ENGINE}
-  echo 'Docker Engine 版本 ： '${DOCKER_VERSION}
-  echo 'Docker Engine 安装包下载地址（在线安装时使用）： '${DOCKER_PACKAGE_URL}
-  echo 'Docker Engine 安装包名称（离线安装时使用） ： '${DOCKER_PACKAGE_NAME}
-  echo '是否安装 Docker Compose ： '${NEED_INSTALL_COMPOSE}
-  echo 'Docker Compose 版本 ： '${DOCKER_COMPOSE_VERSION}
-  echo 'Docker Compose 安装包下载地址（在线安装时使用） ： '${DOCKER_COMPOSE_PACKAGE_URL}
-  echo 'Docker Compose 安装包名称（离线安装时使用） ： '${DOCKER_COMPOSE_PACKAGE_NAME}
-  echo '是否开机自动启动： '${NEED_ENABLE_DOCKER}
-  echo '是否启用 Docker Swarm： '${NEED_ENABLE_DOCKER_SWARM}
-  echo '请确认安装参数是否正确，并根据提示进入安装（Y：安装，N：不安装，E：退出）：'
-  read NEED_DELETE
-  case ${NEED_DELETE} in
-    Y)
-      if [ ${NEED_INSTALL_ENGINE} == "true" ]; then
-        only_install_docker_engine
-      fi
-      if [ ${NEED_INSTALL_COMPOSE} == "true" ]; then
-        only_install_docker_compose
-      fi
-      if [ ${NEED_ENABLE_DOCKER_SWARM} == "true" ]; then
-        only_enable_docker_swarm
-      fi
-      ;;
-    N)
-      echo '取消安装。'
-      ;;
-    E)
-      echo '退出安装。'
-      exit 1
-      ;;
-    *)
-      echo '参数错误。'
-      exit 1
-      ;;
-  esac
+  install_check
 
-  echo '============================== Docker 安装完成！！！ =============================='
-  echo `date +%Y-%m-%d` `date +%H:%M:%S`
-  echo '===================================================================================================='
+  log_info '安装参数如下 ：'
+  log_info 'CPU 架构 ： '"${CPU_ARCH}"
+  log_info 'Docker 安装目录 ： '"${DOCKER_INSTALL_DIR}"
+  log_info 'Docker 数据目录 ： '"${DOCKER_DATA_DIR}"
+  log_info '是否离线安装 ： '"${NEED_OFFLINE_INSTALL}"
+  log_info '是否安装 Docker Engine ： '"${NEED_INSTALL_ENGINE}"
+  log_info 'Docker Engine 版本 ： '"${DOCKER_VERSION}"
+  log_info 'Docker Engine 安装包下载地址（在线安装时使用）： '"${DOCKER_PACKAGE_URL}"
+  log_info 'Docker Engine 安装包名称（离线安装时使用） ： '"${DOCKER_PACKAGE_NAME}"
+  log_info '是否安装 Docker Compose ： '"${NEED_INSTALL_COMPOSE}"
+  log_info 'Docker Compose 版本 ： '"${DOCKER_COMPOSE_VERSION}"
+  log_info 'Docker Compose 安装包下载地址（在线安装时使用） ： '"${DOCKER_COMPOSE_PACKAGE_URL}"
+  log_info 'Docker Compose 安装包名称（离线安装时使用） ： '"${DOCKER_COMPOSE_PACKAGE_NAME}"
+  log_info '是否开机自动启动： '"${NEED_ENABLE_DOCKER}"
+  log_info '是否启用 Docker Swarm： '"${NEED_ENABLE_DOCKER_SWARM}"
+  if confirm_action '请确认安装参数是否正确，并根据提示进入安装（y：安装，N：不安装）'; then
+    if [[ "${NEED_INSTALL_ENGINE}" == true ]]; then
+      only_install_docker_engine
+    fi
+    if [[ "${NEED_INSTALL_COMPOSE}" == true ]]; then
+      only_install_docker_compose
+    fi
+    if [[ "${NEED_ENABLE_DOCKER_SWARM}" == true ]]; then
+      only_enable_docker_swarm
+    fi
+  else
+    log_warning '用户取消安装。'
+    exit 1
+  fi
+
+  log_info '============================== Docker 安装完成！！！ =============================='
+  log_warning '请手动执行【 source ~/.bashrc 】和【 source /etc/profile 】命令更新环境变量！'
+  log_info "$(date '+%Y-%m-%d %H:%M:%S')"
+  log_info '===================================================================================================='
 }
 
 ## 卸载 Docker
 uninstall () {
-  echo '===================================================================================================='
-  echo `date +%Y-%m-%d` `date +%H:%M:%S`
-  echo '============================== 开始卸载 Docker ...... =============================='
+  log_info '===================================================================================================='
+  log_info "$(date '+%Y-%m-%d %H:%M:%S')"
+  log_info '============================== 开始卸载 Docker ...... =============================='
 
-  echo '删除目录如下 ：'
-  echo 'Docker 安装目录 ： '${DOCKER_INSTALL_DIR}
-  echo 'Docker 数据目录 ： '${DOCKER_DATA_DIR}
-  echo '此操作将会卸载 Docker 服务，并删除所有文件（包含 Docker 程序文件、镜像、容器文件等），请确认是否卸载（Y：卸载，N：不卸载，E：退出）：'
-  read NEED_DELETE
-  case ${NEED_DELETE} in
-    Y)
-      disable_docker
-      stop_docker
-      remove_service
-      remove_env
-      remove_system_config
-      delete_user
-      delete_dir
-      ;;
-    N)
-      echo '取消卸载。'
-      ;;
-    E)
-      echo '退出卸载。'
-      exit 1
-      ;;
-    *)
-      echo '参数错误。'
-      exit 1
-      ;;
-  esac
+  log_info '删除目录如下 ：'
+  log_info 'Docker 安装目录 ： '"${DOCKER_INSTALL_DIR}"
+  log_info 'Docker 数据目录 ： '"${DOCKER_DATA_DIR}"
+  if confirm_action '此操作将会卸载 Docker 服务，并删除所有文件（包含 Docker 程序文件、镜像、容器文件等），请确认是否卸载（y：卸载，n：不卸载）'; then
+    disable_docker
+    stop_docker
+    remove_service
+    remove_env
+    remove_system_config
+    delete_user
+    delete_dir
+  else
+    log_warning '用户取消卸载。'
+    exit 1
+  fi
 
-  echo '============================== Docker 卸载完成！！！ =============================='
-  echo `date +%Y-%m-%d` `date +%H:%M:%S`
-  echo '===================================================================================================='
+  log_info '============================== Docker 卸载完成！！！ =============================='
+  log_info "$(date '+%Y-%m-%d %H:%M:%S')"
+  log_info '===================================================================================================='
 }
 
 ## 更新 Docker
 update () {
-  echo '===================================================================================================='
-  echo `date +%Y-%m-%d` `date +%H:%M:%S`
-  echo '============================== 开始更新 Docker ...... =============================='
+  log_info '===================================================================================================='
+  log_info "$(date '+%Y-%m-%d %H:%M:%S')"
+  log_info '============================== 开始更新 Docker ...... =============================='
 
-  echo '更新参数如下 ：'
-  echo 'CPU 架构 ： '${CPU_ARCH}
-  echo 'Docker 安装目录 ： '${DOCKER_INSTALL_DIR}
-  echo 'Docker 数据目录 ： '${DOCKER_DATA_DIR}
-  echo '是否离线安装 ： '${NEED_OFFLINE_INSTALL}
-  echo '是否安装 Docker Engine ： '${NEED_INSTALL_ENGINE}
-  echo 'Docker Engine 版本 ： '${DOCKER_VERSION}
-  echo 'Docker Engine 安装包下载地址（在线安装时使用）： '${DOCKER_PACKAGE_URL}
-  echo 'Docker Engine 安装包名称（离线安装时使用） ： '${DOCKER_PACKAGE_NAME}
-  echo '是否安装 Docker Compose ： '${NEED_INSTALL_COMPOSE}
-  echo 'Docker Compose 版本 ： '${DOCKER_COMPOSE_VERSION}
-  echo 'Docker Compose 安装包下载地址（在线安装时使用） ： '${DOCKER_COMPOSE_PACKAGE_URL}
-  echo 'Docker Compose 安装包名称（离线安装时使用） ： '${DOCKER_COMPOSE_PACKAGE_NAME}
-  echo '是否开机自动启动： '${NEED_ENABLE_DOCKER}
-  echo '是否启用 Docker Swarm： '${NEED_ENABLE_DOCKER_SWARM}
-  echo '此操作将会更新当前 Docker 版本，存在一定风险，请确认是否更新（Y：更新，N：不更新，E：退出）：'
-  read NEED_UPDATE
-  case ${NEED_UPDATE} in
-    Y)
-      if [ ${NEED_INSTALL_ENGINE} == "true" ]; then
-        only_update_docker_engine
-      fi
-      if [ ${NEED_INSTALL_COMPOSE} == 'true' ]; then
-        only_update_docker_compose
-      fi
-      if [ ${NEED_ENABLE_DOCKER_SWARM} == "true" ]; then
-        only_enable_docker_swarm
-      fi
-      ;;
-    N)
-      echo '取消更新。'
-      ;;
-    E)
-      echo '退出更新。'
-      exit 1
-      ;;
-    *)
-      echo '参数错误。'
-      exit 1
-      ;;
-  esac
+  install_check
 
-  echo '============================== Docker 更新完成！！！ =============================='
-  echo `date +%Y-%m-%d` `date +%H:%M:%S`
-  echo '===================================================================================================='
+  log_info '更新参数如下 ：'
+  log_info 'CPU 架构 ： '"${CPU_ARCH}"
+  log_info 'Docker 安装目录 ： '"${DOCKER_INSTALL_DIR}"
+  log_info 'Docker 数据目录 ： '"${DOCKER_DATA_DIR}"
+  log_info '是否离线安装 ： '"${NEED_OFFLINE_INSTALL}"
+  log_info '是否安装 Docker Engine ： '"${NEED_INSTALL_ENGINE}"
+  log_info 'Docker Engine 版本 ： '"${DOCKER_VERSION}"
+  log_info 'Docker Engine 安装包下载地址（在线安装时使用）： '"${DOCKER_PACKAGE_URL}"
+  log_info 'Docker Engine 安装包名称（离线安装时使用） ： '"${DOCKER_PACKAGE_NAME}"
+  log_info '是否安装 Docker Compose ： '"${NEED_INSTALL_COMPOSE}"
+  log_info 'Docker Compose 版本 ： '"${DOCKER_COMPOSE_VERSION}"
+  log_info 'Docker Compose 安装包下载地址（在线安装时使用） ： '"${DOCKER_COMPOSE_PACKAGE_URL}"
+  log_info 'Docker Compose 安装包名称（离线安装时使用） ： '"${DOCKER_COMPOSE_PACKAGE_NAME}"
+  log_info '是否开机自动启动： '"${NEED_ENABLE_DOCKER}"
+  log_info '是否启用 Docker Swarm： '"${NEED_ENABLE_DOCKER_SWARM}"
+  if confirm_action '此操作将会更新当前 Docker 版本，存在一定风险，请确认是否更新（y：更新，n：不更新）'; then
+    if [[ "${NEED_INSTALL_ENGINE}" == true ]]; then
+      only_update_docker_engine
+    fi
+    if [[ "${NEED_INSTALL_COMPOSE}" == true ]]; then
+      only_update_docker_compose
+    fi
+    if [[ "${NEED_ENABLE_DOCKER_SWARM}" == true ]]; then
+      only_enable_docker_swarm
+    fi
+  else 
+    log_warning '用户取消更新。'
+    exit 1
+  fi
+
+  log_info '============================== Docker 更新完成！！！ =============================='
+  log_warning '请手动执行【 source ~/.bashrc 】和【 source /etc/profile 】命令更新环境变量！'
+  log_info "$(date '+%Y-%m-%d %H:%M:%S')"
+  log_info '===================================================================================================='
 }
 
+# 校验是否为 root 用户
+check_root
+
 # 初始化选项
-echo $@
+#log_debug $@
 
 while getopts "v:i:d:p:c:n:r:m:t:abs" opt; do
   case $opt in
     v) 
       ## 设置 Docker Engine 版本
       DOCKER_VERSION="${OPTARG}"
-      info '用户自定义 Docker Engine 版本： '${OPTARG}
+      log_info '用户自定义 Docker Engine 版本： '${OPTARG}
       ;;
     i)
       ## 设置 Docker 安装目录 
       DOCKER_INSTALL_DIR="${OPTARG}"
-      info '用户自定义 Docker 安装目录： '${OPTARG}
+      log_info '用户自定义 Docker 安装目录： '${OPTARG}
       ;;
     d)
       ## 设置 Docker 数据目录
       DOCKER_DATA_DIR="${OPTARG}"
-      info '用户自定义 Docker 数据目录： '${OPTARG}
+      log_info '用户自定义 Docker 数据目录： '${OPTARG}
       ;;
     p)
       ## 设置 Docker 安装包名称
       NEED_OFFLINE_INSTALL=true
       DOCKER_PACKAGE_NAME="${OPTARG}"
-      info '【离线安装】用户自定义 Docker Engine 安装包名称： '${OPTARG}
+      log_info '【离线安装】用户自定义 Docker Engine 安装包名称： '${OPTARG}
       ;;
     c)
       ## 设置 Docker Compose 版本
       DOCKER_COMPOSE_VERSION="${OPTARG}"
-      info '用户自定义 Docker Compose 版本： '${OPTARG}
+      log_info '用户自定义 Docker Compose 版本： '${OPTARG}
       ;;
     n)
       ## 设置 Docker Compose 安装包名称
       NEED_OFFLINE_INSTALL=true
       DOCKER_COMPOSE_PACKAGE_NAME="${OPTARG}"
-      info '【离线安装】用户自定义 Docker Compose 安装包名称： '${OPTARG}
+      log_info '【离线安装】用户自定义 Docker Compose 安装包名称： '${OPTARG}
       ;;
     a)
       ## 设置仅安装 Docker Engine
       NEED_INSTALL_ENGINE=true
       NEED_INSTALL_COMPOSE=false
-      info '用户自定义： 仅安装 Docker Engine'
+      log_info '用户自定义： 仅安装 Docker Engine'
       ;;
     b)
       ## 设置仅安装 Docker Compose
       NEED_INSTALL_ENGINE=false
       NEED_INSTALL_COMPOSE=true
-      info '用户自定义： 仅安装 Docker Compose'
+      log_info '用户自定义： 仅安装 Docker Compose'
       ;;
     s)
       ## 设置启用 Docker Swarm
       NEED_ENABLE_DOCKER_SWARM=true
-      info '用户自定义： 启用 Docker Swarm'
+      log_info '用户自定义： 启用 Docker Swarm'
       ;;
     r)
       ## 设置 Docker Swarm 角色
-      if [ ${OPTARG} != "manager" && ${OPTARG} != "worker" ]; then
-        error '角色错误，可选择：manager、worker'
+      if [[ ${OPTARG} != "manager" && ${OPTARG} != "worker" ]]; then
+        log_error '角色错误，可选择：manager、worker'
       fi
       NEED_ENABLE_DOCKER_SWARM=true
       DOCKER_SWARM_ROLE="${OPTARG}"
-      info '用户自定义： Docker Swarm 角色（'${OPTARG}'）'
+      log_info '用户自定义： Docker Swarm 角色（'${OPTARG}'）'
       ;;
     m)
       ## 设置 Docker Swarm Manager IP
       NEED_ENABLE_DOCKER_SWARM=true
       DOCKER_SWARM_MANAGER_IP="${OPTARG}"
-      info '用户自定义： Docker Swarm Manager IP（'${OPTARG}'）'
+      log_info '用户自定义： Docker Swarm Manager IP（'${OPTARG}'）'
       ;;
     t)
       ## 设置 Docker Swarm Token
       NEED_ENABLE_DOCKER_SWARM=true
       DOCKER_SWARM_TOKEN="${OPTARG}"
-      info '用户自定义： Docker Swarm Token（'${OPTARG}'）'
+      log_info '用户自定义： Docker Swarm Token（'${OPTARG}'）'
       ;;
   esac
 done
@@ -724,7 +943,7 @@ done
 shift $((OPTIND-1))
 
 # 根据参数执行方法
-case $@ in
+case "$@" in
   help)
     help
     ;;
