@@ -2,7 +2,7 @@
 
 
 
-\[!\[Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://git.hty1024.com/HTY1024/shell\_tools/src/branch/main/docker-tools)
+\[!\[Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://git.hty1024.com/HTY1024/shell\_tools/src/branch/main/docker-tools)
 
 \[!\[License](https://img.shields.io/badge/license-GNU-green.svg)](https://git.hty1024.com/HTY1024/shell\_tools/src/branch/main/LICENSE)
 
@@ -160,9 +160,9 @@ cd shell\_tools/docker-tools
 
 \# 方法 2: 直接ダウンロード
 
-wget https://git.hty1024.com/HTY1024/shell\_tools/src/branch/main/releases/docker-tools\_v2.0.0.zip
+wget https://git.hty1024.com/HTY1024/shell\_tools/src/branch/main/releases/docker-tools\_v2.1.0.zip
 
-unzip docker-tools\_v2.0.0.zip
+unzip docker-tools\_v2.1.0.zip
 
 ```
 
@@ -194,7 +194,7 @@ sudo ./docker-tools.sh install
 
 \# またはバージョンを指定
 
-sudo ./docker-tools.sh -v 29.1.4 -c v5.0.1 install
+sudo ./docker-tools.sh -v 29.4.1 -c v5.1.3 install
 
 ```
 
@@ -240,7 +240,7 @@ docker info
 
 ```bash
 
-\# デフォルトインストール (Docker 29.1.4 + Compose v5.0.1)
+\# デフォルトインストール (Docker 29.4.1 + Compose v5.1.3)
 
 sudo ./docker-tools.sh install
 
@@ -248,7 +248,7 @@ sudo ./docker-tools.sh install
 
 \# バージョン指定
 
-sudo ./docker-tools.sh -v 29.1.4 -c v5.0.1 install
+sudo ./docker-tools.sh -v 29.4.1 -c v5.1.3 install
 
 
 
@@ -280,13 +280,13 @@ sudo ./docker-tools.sh -i /data/docker/bin -d /data/docker/data install
 
 \# Docker Engine のダウンロード
 
-wget https://download.docker.com/linux/static/stable/x86\_64/docker-29.1.4.tgz
+wget https://download.docker.com/linux/static/stable/x86\_64/docker-29.4.1.tgz
 
 
 
 \# Docker Compose のダウンロード
 
-wget https://github.com/docker/compose/releases/download/v5.0.1/docker-compose-linux-x86\_64
+wget https://github.com/docker/compose/releases/download/v5.1.3/docker-compose-linux-x86\_64
 
 ```
 
@@ -300,7 +300,7 @@ wget https://github.com/docker/compose/releases/download/v5.0.1/docker-compose-l
 
 \# パッケージとスクリプトを同じディレクトリにアップロード
 
-scp docker-29.1.4.tgz docker-compose-linux-x86\_64 docker-tools.sh user@server:/path/to/dir/
+scp docker-29.4.1.tgz docker-compose-linux-x86\_64 docker-tools.sh user@server:/path/to/dir/
 
 ```
 
@@ -312,7 +312,7 @@ scp docker-29.1.4.tgz docker-compose-linux-x86\_64 docker-tools.sh user@server:/
 
 ```bash
 
-sudo ./docker-tools.sh -p docker-29.1.4.tgz -n docker-compose-linux-x86\_64 install
+sudo ./docker-tools.sh -p docker-29.4.1.tgz -n docker-compose-linux-x86\_64 install
 
 ```
 
@@ -478,7 +478,7 @@ sudo ./docker-tools.sh \\
 
 sudo ./docker-tools.sh \\
 
-&nbsp; -p docker-29.1.4.tgz \\
+&nbsp; -p docker-29.4.1.tgz \\
 
 &nbsp; -n docker-compose-linux-x86\_64 \\
 
@@ -548,13 +548,13 @@ sudo ./docker-tools.sh \\
 
 \# 指定バージョンへのオンライン更新
 
-sudo ./docker-tools.sh -v 29.1.4 update
+sudo ./docker-tools.sh -v 29.4.1 update
 
 
 
 \# オフライン更新
 
-sudo ./docker-tools.sh -p docker-29.1.4.tgz update
+sudo ./docker-tools.sh -p docker-29.4.1.tgz update
 
 ```
 
@@ -572,15 +572,15 @@ sudo ./docker-tools.sh -p docker-29.1.4.tgz update
 
 |-----------|------|-----------|-----|
 
-| `-v` | Docker Engine バージョン | 29.1.4 | `-v 28.2.1` |
+| `-v` | Docker Engine バージョン | 29.4.1 | `-v 28.2.1` |
 
 | `-i` | Docker インストールディレクトリ | /opt/docker/bin | `-i /data/docker/bin` |
 
 | `-d` | Docker データディレクトリ | /opt/docker/data | `-d /data/docker/data` |
 
-| `-p` | Docker Engine パッケージ名 (オフライン) | - | `-p docker-29.1.4.tgz` |
+| `-p` | Docker Engine パッケージ名 (オフライン) | - | `-p docker-29.4.1.tgz` |
 
-| `-c` | Docker Compose バージョン | v5.0.1 | `-c v2.36.2` |
+| `-c` | Docker Compose バージョン | v5.1.3 | `-c v2.36.2` |
 
 | `-n` | Docker Compose パッケージ名 (オフライン) | - | `-n docker-compose-linux-x86\_64` |
 
@@ -616,7 +616,7 @@ vim docker-tools.sh
 
 \# これらの変数を変更
 
-DOCKER\_VERSION=29.1.4              # Docker バージョン
+DOCKER\_VERSION=29.4.1              # Docker バージョン
 
 DOCKER\_INSTALL\_DIR=/opt/docker/bin # インストールディレクトリ
 
@@ -806,7 +806,7 @@ ls -lh docker-\*.tgz docker-compose-\*
 
 \# 正しいファイル名を確認
 
-./docker-tools.sh -p docker-29.1.4.tgz -n docker-compose-linux-x86\_64 install
+./docker-tools.sh -p docker-29.4.1.tgz -n docker-compose-linux-x86\_64 install
 
 ```
 
@@ -934,7 +934,7 @@ sudo rm -rf /tmp/docker-\*
 
 \# 再インストール
 
-sudo ./docker-tools.sh -v 29.1.4 install
+sudo ./docker-tools.sh -v 29.4.1 install
 
 ```
 
@@ -1215,6 +1215,60 @@ docker run -d \\
 ```
 
 
+
+\## 📝 変更履歴
+
+\### v2.1.0 (2026-04-24)
+
+\#### 🆕 バージョン更新
+
+\- デフォルト Docker Engine を \*\*29.4.1\*\* に更新
+
+\- デフォルト Docker Compose を \*\*v5.1.3\*\* に更新
+
+\#### 🐛 バグ修正
+
+\- サブコマンド分岐の修正：`case "$@"` が複数引数で一致しない問題、`info` が `info_docker` を呼べていなかった問題
+
+\- `check_net` の TIMEOUT 位置パラメータ誤用および 2xx/3xx を失敗扱いにしていた不具合を修正
+
+\- `backup_file` がディレクトリに対して機能せず、アップグレード時にバックアップされていなかった問題を修正
+
+\- `remove_env` が sed で残す空行を、範囲削除に切り替え
+
+\- `docker.service` のコメントと `ExecStart=` が同一行に残っていた残骸を修正
+
+\- スペルミスを修正（Dokcer / Coimpose / Conpose）
+
+\#### ✨ 堅牢性向上
+
+\- `config_env` を冪等化：再インストール時に `~/.bashrc`・`/etc/profile` への重複追記を回避
+
+\- スクリプト内で `source ~/.bashrc` を実行しないように変更（`set -u` 時の外部 rc による中断を防止）
+
+\- `daemon.json` のテンプレート置換後に `{{...}}` の残留を検証
+
+\- データディレクトリは owner のみ変更し、`chmod -R 755` によるイメージレイヤ権限破壊を回避
+
+\- 非推奨の `chown docker.docker` を `docker:docker` に更新
+
+\- `useradd/groupadd` のハードコード UID/GID=1001 を削除し衝突を防止
+
+\- `CPU_ARCH` をランタイム検出に変更、`aarch64` をサポート
+
+\- `getopts` に不明オプション / 引数欠落の分岐を追加。`-r/-m/-t` は Swarm を暗黙に有効化しない
+
+\- Swarm worker 役割での Manager IP と Token の強制バリデーション
+
+\- `only_install_docker_compose` は Docker Engine 未稼働時に restart/info をスキップ
+
+\### v2.0.0
+
+\- ロギングの再構築、`set -euo pipefail` の導入、インタラクティブ確認
+
+\### v1.3.x / v1.2.x / v1.1.x
+
+\- Git 履歴を参照
 
 \## 👤 著者
 

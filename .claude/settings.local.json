@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash -n docker-tools)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:download.docker.com)",
+      "Bash(ls -la releases/)",
+      "Bash(find . -maxdepth 3 -type d -name \"release*\" -o -name \"dist\")",
+      "Bash(unzip -l releases/docker-tools_v2.0.0.zip)",
+      "Bash(rm -f ../releases/docker-tools_v2.1.0.zip)",
+      "Bash(zip ../releases/docker-tools_v2.1.0.zip docker-tools daemon.json docker.service docker.socket)",
+      "Bash(powershell -NoProfile -Command \"Compress-Archive -Path docker-tools,daemon.json,docker.service,docker.socket -DestinationPath ../releases/docker-tools_v2.1.0.zip -Force\")",
+      "Bash(unzip -l releases/docker-tools_v2.1.0.zip)"
+    ]
+  }
+}

@@ -2,7 +2,7 @@
 
 
 
-\[!\[Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://git.hty1024.com/HTY1024/shell\_tools/src/branch/main/docker-tools)
+\[!\[Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://git.hty1024.com/HTY1024/shell\_tools/src/branch/main/docker-tools)
 
 \[!\[License](https://img.shields.io/badge/license-GNU-green.svg)](https://git.hty1024.com/HTY1024/shell\_tools/src/branch/main/LICENSE)
 
@@ -160,9 +160,9 @@ cd shell\_tools/docker-tools
 
 \# 方式二：直接下载
 
-wget https://git.hty1024.com/HTY1024/shell\_tools/src/branch/main/releases/docker-tools\_v2.0.0.zip
+wget https://git.hty1024.com/HTY1024/shell\_tools/src/branch/main/releases/docker-tools\_v2.1.0.zip
 
-unzip docker-tools\_v2.0.0.zip
+unzip docker-tools\_v2.1.0.zip
 
 ```
 
@@ -194,7 +194,7 @@ sudo ./docker-tools.sh install
 
 \# 或者指定版本安装
 
-sudo ./docker-tools.sh -v 29.1.4 -c v5.0.1 install
+sudo ./docker-tools.sh -v 29.4.1 -c v5.1.3 install
 
 ```
 
@@ -240,7 +240,7 @@ docker info
 
 ```bash
 
-\# 默认安装（Docker 29.1.4 + Compose v5.0.1）
+\# 默认安装（Docker 29.4.1 + Compose v5.1.3）
 
 sudo ./docker-tools.sh install
 
@@ -248,7 +248,7 @@ sudo ./docker-tools.sh install
 
 \# 指定版本安装
 
-sudo ./docker-tools.sh -v 29.1.4 -c v5.0.1 install
+sudo ./docker-tools.sh -v 29.4.1 -c v5.1.3 install
 
 
 
@@ -280,13 +280,13 @@ sudo ./docker-tools.sh -i /data/docker/bin -d /data/docker/data install
 
 \# 下载 Docker Engine
 
-wget https://download.docker.com/linux/static/stable/x86\_64/docker-29.1.4.tgz
+wget https://download.docker.com/linux/static/stable/x86\_64/docker-29.4.1.tgz
 
 
 
 \# 下载 Docker Compose
 
-wget https://github.com/docker/compose/releases/download/v5.0.1/docker-compose-linux-x86\_64
+wget https://github.com/docker/compose/releases/download/v5.1.3/docker-compose-linux-x86\_64
 
 ```
 
@@ -300,7 +300,7 @@ wget https://github.com/docker/compose/releases/download/v5.0.1/docker-compose-l
 
 \# 将安装包和脚本上传到同一目录
 
-scp docker-29.1.4.tgz docker-compose-linux-x86\_64 docker-tools.sh user@server:/path/to/dir/
+scp docker-29.4.1.tgz docker-compose-linux-x86\_64 docker-tools.sh user@server:/path/to/dir/
 
 ```
 
@@ -312,7 +312,7 @@ scp docker-29.1.4.tgz docker-compose-linux-x86\_64 docker-tools.sh user@server:/
 
 ```bash
 
-sudo ./docker-tools.sh -p docker-29.1.4.tgz -n docker-compose-linux-x86\_64 install
+sudo ./docker-tools.sh -p docker-29.4.1.tgz -n docker-compose-linux-x86\_64 install
 
 ```
 
@@ -478,7 +478,7 @@ sudo ./docker-tools.sh \\
 
 sudo ./docker-tools.sh \\
 
-&nbsp; -p docker-29.1.4.tgz \\
+&nbsp; -p docker-29.4.1.tgz \\
 
 &nbsp; -n docker-compose-linux-x86\_64 \\
 
@@ -548,13 +548,13 @@ sudo ./docker-tools.sh \\
 
 \# 在线更新到指定版本
 
-sudo ./docker-tools.sh -v 29.1.4 update
+sudo ./docker-tools.sh -v 29.4.1 update
 
 
 
 \# 离线更新
 
-sudo ./docker-tools.sh -p docker-29.1.4.tgz update
+sudo ./docker-tools.sh -p docker-29.4.1.tgz update
 
 ```
 
@@ -572,15 +572,15 @@ sudo ./docker-tools.sh -p docker-29.1.4.tgz update
 
 |------|------|--------|------|
 
-| `-v` | Docker Engine 版本 | 29.1.4 | `-v 28.2.1` |
+| `-v` | Docker Engine 版本 | 29.4.1 | `-v 28.2.1` |
 
 | `-i` | Docker 安装目录 | /opt/docker/bin | `-i /data/docker/bin` |
 
 | `-d` | Docker 数据目录 | /opt/docker/data | `-d /data/docker/data` |
 
-| `-p` | Docker Engine 安装包名称（离线） | - | `-p docker-29.1.4.tgz` |
+| `-p` | Docker Engine 安装包名称（离线） | - | `-p docker-29.4.1.tgz` |
 
-| `-c` | Docker Compose 版本 | v5.0.1 | `-c v2.36.2` |
+| `-c` | Docker Compose 版本 | v5.1.3 | `-c v2.36.2` |
 
 | `-n` | Docker Compose 安装包名称（离线） | - | `-n docker-compose-linux-x86\_64` |
 
@@ -616,7 +616,7 @@ vim docker-tools.sh
 
 \# 修改以下变量
 
-DOCKER\_VERSION=29.1.4              # Docker 版本
+DOCKER\_VERSION=29.4.1              # Docker 版本
 
 DOCKER\_INSTALL\_DIR=/opt/docker/bin # 安装目录
 
@@ -806,7 +806,7 @@ ls -lh docker-\*.tgz docker-compose-\*
 
 \# 确保文件名正确
 
-./docker-tools.sh -p docker-29.1.4.tgz -n docker-compose-linux-x86\_64 install
+./docker-tools.sh -p docker-29.4.1.tgz -n docker-compose-linux-x86\_64 install
 
 ```
 
@@ -934,7 +934,7 @@ sudo rm -rf /tmp/docker-\*
 
 \# 重新安装
 
-sudo ./docker-tools.sh -v 29.1.4 install
+sudo ./docker-tools.sh -v 29.4.1 install
 
 ```
 
@@ -1215,6 +1215,60 @@ docker run -d \\
 ```
 
 
+
+\## 📝 更新日志
+
+\### v2.1.0 (2026-04-24)
+
+\#### 🆕 版本更新
+
+\- 默认 Docker Engine 升级至 \*\*29.4.1\*\*
+
+\- 默认 Docker Compose 升级至 \*\*v5.1.3\*\*
+
+\#### 🐛 问题修复
+
+\- 修复子命令调度：`case "$@"` 多参数无法匹配；`info` 未调用到 `info_docker`
+
+\- 修复 `check_net` 中 TIMEOUT 位置参数误用，以及 2xx/3xx 被错误当作失败码
+
+\- 修复 `backup_file` 对目录无效导致升级前未实际备份
+
+\- 修复 `remove_env` 使用 sed 直删导致残留空行，改用范围删除
+
+\- 修复 `docker.service` 中注释与 `ExecStart=` 残留混行
+
+\- 修复拼写错误（Dokcer / Coimpose / Conpose）
+
+\#### ✨ 健壮性增强
+
+\- `config_env` 幂等化：重复安装不再重复追加 `~/.bashrc`、`/etc/profile`
+
+\- 脚本内不再 `source ~/.bashrc`，避免 `set -u` 下被外部脚本污染中断
+
+\- `daemon.json` 模板替换后校验，防止 `{{...}}` 占位符残留导致 JSON 非法
+
+\- 数据目录仅改 owner，不再 `chmod -R 755`，避免破坏镜像层权限
+
+\- `chown docker.docker` 更新为 `docker:docker`（点分隔语法已弃用）
+
+\- 去掉 `useradd/groupadd` 硬编码 UID/GID=1001，避免与目标机冲突
+
+\- `CPU_ARCH` 改为运行时探测，扩展支持 `aarch64`
+
+\- `getopts` 增加 `?` / `:` 错误分支，且 `-r/-m/-t` 不再隐式启用 Swarm
+
+\- Swarm worker 模式对 Manager IP 与 Token 强校验
+
+\- `only_install_docker_compose` 在 Docker Engine 未运行时跳过 restart/info
+
+\### v2.0.0
+
+\- 重构日志系统、加入 `set -euo pipefail`、完善交互确认
+
+\### v1.3.x / v1.2.x / v1.1.x
+
+\- 详见 git 提交历史
 
 \## 👤 作者
 

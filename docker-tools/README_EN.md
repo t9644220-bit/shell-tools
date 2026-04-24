@@ -2,7 +2,7 @@
 
 
 
-\[!\[Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://git.hty1024.com/HTY1024/shell\_tools/src/branch/main/docker-tools)
+\[!\[Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://git.hty1024.com/HTY1024/shell\_tools/src/branch/main/docker-tools)
 
 \[!\[License](https://img.shields.io/badge/license-GNU-green.svg)](https://git.hty1024.com/HTY1024/shell\_tools/src/branch/main/LICENSE)
 
@@ -160,9 +160,9 @@ cd shell\_tools/docker-tools
 
 \# Method 2: Direct download
 
-wget https://git.hty1024.com/HTY1024/shell\_tools/src/branch/main/releases/docker-tools\_v2.0.0.zip
+wget https://git.hty1024.com/HTY1024/shell\_tools/src/branch/main/releases/docker-tools\_v2.1.0.zip
 
-unzip docker-tools\_v2.0.0.zip
+unzip docker-tools\_v2.1.0.zip
 
 ```
 
@@ -194,7 +194,7 @@ sudo ./docker-tools.sh install
 
 \# Or specify version
 
-sudo ./docker-tools.sh -v 29.1.4 -c v5.0.1 install
+sudo ./docker-tools.sh -v 29.4.1 -c v5.1.3 install
 
 ```
 
@@ -240,7 +240,7 @@ docker info
 
 ```bash
 
-\# Default installation (Docker 29.1.4 + Compose v5.0.1)
+\# Default installation (Docker 29.4.1 + Compose v5.1.3)
 
 sudo ./docker-tools.sh install
 
@@ -248,7 +248,7 @@ sudo ./docker-tools.sh install
 
 \# Specify version
 
-sudo ./docker-tools.sh -v 29.1.4 -c v5.0.1 install
+sudo ./docker-tools.sh -v 29.4.1 -c v5.1.3 install
 
 
 
@@ -280,13 +280,13 @@ Download packages on a machine with network access:
 
 \# Download Docker Engine
 
-wget https://download.docker.com/linux/static/stable/x86\_64/docker-29.1.4.tgz
+wget https://download.docker.com/linux/static/stable/x86\_64/docker-29.4.1.tgz
 
 
 
 \# Download Docker Compose
 
-wget https://github.com/docker/compose/releases/download/v5.0.1/docker-compose-linux-x86\_64
+wget https://github.com/docker/compose/releases/download/v5.1.3/docker-compose-linux-x86\_64
 
 ```
 
@@ -300,7 +300,7 @@ wget https://github.com/docker/compose/releases/download/v5.0.1/docker-compose-l
 
 \# Upload packages and script to the same directory
 
-scp docker-29.1.4.tgz docker-compose-linux-x86\_64 docker-tools.sh user@server:/path/to/dir/
+scp docker-29.4.1.tgz docker-compose-linux-x86\_64 docker-tools.sh user@server:/path/to/dir/
 
 ```
 
@@ -312,7 +312,7 @@ scp docker-29.1.4.tgz docker-compose-linux-x86\_64 docker-tools.sh user@server:/
 
 ```bash
 
-sudo ./docker-tools.sh -p docker-29.1.4.tgz -n docker-compose-linux-x86\_64 install
+sudo ./docker-tools.sh -p docker-29.4.1.tgz -n docker-compose-linux-x86\_64 install
 
 ```
 
@@ -478,7 +478,7 @@ sudo ./docker-tools.sh \\
 
 sudo ./docker-tools.sh \\
 
-&nbsp; -p docker-29.1.4.tgz \\
+&nbsp; -p docker-29.4.1.tgz \\
 
 &nbsp; -n docker-compose-linux-x86\_64 \\
 
@@ -548,13 +548,13 @@ sudo ./docker-tools.sh \\
 
 \# Online update to specified version
 
-sudo ./docker-tools.sh -v 29.1.4 update
+sudo ./docker-tools.sh -v 29.4.1 update
 
 
 
 \# Offline update
 
-sudo ./docker-tools.sh -p docker-29.1.4.tgz update
+sudo ./docker-tools.sh -p docker-29.4.1.tgz update
 
 ```
 
@@ -572,15 +572,15 @@ sudo ./docker-tools.sh -p docker-29.1.4.tgz update
 
 |-----------|-------------|---------|---------|
 
-| `-v` | Docker Engine version | 29.1.4 | `-v 28.2.1` |
+| `-v` | Docker Engine version | 29.4.1 | `-v 28.2.1` |
 
 | `-i` | Docker installation directory | /opt/docker/bin | `-i /data/docker/bin` |
 
 | `-d` | Docker data directory | /opt/docker/data | `-d /data/docker/data` |
 
-| `-p` | Docker Engine package name (offline) | - | `-p docker-29.1.4.tgz` |
+| `-p` | Docker Engine package name (offline) | - | `-p docker-29.4.1.tgz` |
 
-| `-c` | Docker Compose version | v5.0.1 | `-c v2.36.2` |
+| `-c` | Docker Compose version | v5.1.3 | `-c v2.36.2` |
 
 | `-n` | Docker Compose package name (offline) | - | `-n docker-compose-linux-x86\_64` |
 
@@ -616,7 +616,7 @@ vim docker-tools.sh
 
 \# Modify these variables
 
-DOCKER\_VERSION=29.1.4              # Docker version
+DOCKER\_VERSION=29.4.1              # Docker version
 
 DOCKER\_INSTALL\_DIR=/opt/docker/bin # Installation directory
 
@@ -806,7 +806,7 @@ ls -lh docker-\*.tgz docker-compose-\*
 
 \# Ensure correct filenames
 
-./docker-tools.sh -p docker-29.1.4.tgz -n docker-compose-linux-x86\_64 install
+./docker-tools.sh -p docker-29.4.1.tgz -n docker-compose-linux-x86\_64 install
 
 ```
 
@@ -934,7 +934,7 @@ sudo rm -rf /tmp/docker-\*
 
 \# Reinstall
 
-sudo ./docker-tools.sh -v 29.1.4 install
+sudo ./docker-tools.sh -v 29.4.1 install
 
 ```
 
@@ -1215,6 +1215,60 @@ docker run -d \\
 ```
 
 
+
+\## 📝 Changelog
+
+\### v2.1.0 (2026-04-24)
+
+\#### 🆕 Version Updates
+
+\- Default Docker Engine bumped to \*\*29.4.1\*\*
+
+\- Default Docker Compose bumped to \*\*v5.1.3\*\*
+
+\#### 🐛 Bug Fixes
+
+\- Fix subcommand dispatch: `case "$@"` failed on multi-arg; `info` missed `info_docker`
+
+\- Fix `check_net` TIMEOUT positional-param misuse, and 2xx/3xx incorrectly treated as failures
+
+\- Fix `backup_file` not working on directories (upgrades previously skipped backup)
+
+\- Fix `remove_env` leaving blank lines; switched to range deletion via sed
+
+\- Fix leftover mixed line with comment and `ExecStart=` in `docker.service`
+
+\- Fix typos (Dokcer / Coimpose / Conpose)
+
+\#### ✨ Robustness
+
+\- `config_env` is now idempotent — repeated installs no longer duplicate `~/.bashrc` / `/etc/profile`
+
+\- No longer `source ~/.bashrc` inside the script (prevents `set -u` crashes from third-party rc files)
+
+\- Validate `daemon.json` after template substitution to catch unfilled `{{...}}` placeholders
+
+\- Data directory owner-only changes; dropped `chmod -R 755` which could break image layer permissions
+
+\- Replace deprecated `chown docker.docker` with `docker:docker`
+
+\- Remove hardcoded UID/GID=1001 in `useradd/groupadd` to avoid collisions
+
+\- `CPU_ARCH` is now runtime-detected; `aarch64` supported
+
+\- `getopts` now handles unknown/missing-arg options; `-r/-m/-t` no longer implicitly enable Swarm
+
+\- Strong validation of Manager IP and Token for Swarm worker role
+
+\- `only_install_docker_compose` skips restart/info when Docker Engine isn't running
+
+\### v2.0.0
+
+\- Logging refactor, `set -euo pipefail`, interactive confirmations
+
+\### v1.3.x / v1.2.x / v1.1.x
+
+\- See git history
 
 \## 👤 Author
 
