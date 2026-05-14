@@ -5,7 +5,7 @@ set -euo pipefail
 
 # 参数配置
 ## 版本号
-VERSION=2.1.0
+VERSION=2.2.0
 ## 当前的日期、日期时间
 DATE="$(date '+%Y%m%d')"
 DATETIME="$(date '+%Y%m%d_%H%M%S')"

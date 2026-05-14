@@ -1,0 +1,30 @@
+# 防止 Windows 检出时把 shell 脚本和 Linux 配置文件转成 CRLF
+# 否则在 Linux 上 shebang `#!/bin/bash\r` 会触发 "cannot execute: required file not found"
+
+* text=auto eol=lf
+
+# 显式列出 shell 脚本与 Linux 系统配置：始终 LF
+bf            text eol=lf
+cvs           text eol=lf
+dii           text eol=lf
+ghd           text eol=lf
+pip           text eol=lf
+sp            text eol=lf
+*.sh          text eol=lf
+
+# docker-tools 相关
+docker-tools/docker-tools  text eol=lf
+docker-tools/daemon.json   text eol=lf
+docker-tools/docker.service text eol=lf
+docker-tools/docker.socket text eol=lf
+
+# 二进制（含 zip 发布包）保持原样
+releases/*.zip binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.zip  binary
+*.gz   binary
+*.tgz  binary
