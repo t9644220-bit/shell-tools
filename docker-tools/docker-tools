@@ -5,7 +5,7 @@ set -euo pipefail
 
 # 参数配置
 ## 版本号
-VERSION=2.2.0
+VERSION=2.3.0
 ## 当前的日期、日期时间
 DATE="$(date '+%Y%m%d')"
 DATETIME="$(date '+%Y%m%d_%H%M%S')"
@@ -14,7 +14,7 @@ CPU_ARCH=""
 ## 系统配置文件目录
 SYSTEMD_DIR=/usr/lib/systemd/system
 ## Docker 安装目录
-DOCKER_INSTALL_DIR=/opt/docker/bin
+DOCKER_INSTALL_DIR=/opt/docker
 ## Docker 数据目录
 DOCKER_DATA_DIR=/opt/docker/data
 ## 是否离线安装
@@ -22,15 +22,15 @@ NEED_OFFLINE_INSTALL=true
 ## 是否安装 Docker Engine
 NEED_INSTALL_ENGINE=true
 ## Docker 版本号
-DOCKER_VERSION=29.4.1
+DOCKER_VERSION=29.5.2
 ## Docker 安装包下载地址（在线安装时使用）
 DOCKER_PACKAGE_URL=https://download.docker.com/linux/static/stable
 ## Docker 安装包名称（离线安装时使用）
-DOCKER_PACKAGE_NAME=docker-29.4.1.tgz
+DOCKER_PACKAGE_NAME=docker-29.5.2.tgz
 ## 是否安装 Docker Compose
 NEED_INSTALL_COMPOSE=true
 ## Docker Compose 版本号
-DOCKER_COMPOSE_VERSION=v5.1.3
+DOCKER_COMPOSE_VERSION=v5.1.4
 ## Docker Compose 安装包下载地址（在线安装时使用）
 DOCKER_COMPOSE_PACKAGE_URL=https://github.com/docker/compose/releases/download
 ## Docker Compose 安装包名称（离线安装时使用）
@@ -297,11 +297,11 @@ help () {
   echo -e ""
   echo -e "${COLOR_BOLD_GREEN}使用方式:  docker-tools 参数 选项"
   echo -e "${COLOR_BOLD_BLUE}参数说明："
-  echo -e "  ${COLOR_BLUE}-v： Docker 版本（可选，默认安装 29.4.1 版本）"
+  echo -e "  ${COLOR_BLUE}-v： Docker 版本（可选，默认安装 29.5.2 版本）"
   echo -e "  ${COLOR_BLUE}-i： Docker 安装目录（可选，默认为 /opt/docker/bin）"
   echo -e "  ${COLOR_BLUE}-d： Docker 数据目录（可选，默认为 /opt/docker/data）"
   echo -e "  ${COLOR_BLUE}-p： Docker 安装包名称（可选，仅离线安装时使用，默认为在线安装）"
-  echo -e "  ${COLOR_BLUE}-c： Docker Compose 版本（可选，默认安装 v5.1.3 版本）"
+  echo -e "  ${COLOR_BLUE}-c： Docker Compose 版本（可选，默认安装 v5.1.4 版本）"
   echo -e "  ${COLOR_BLUE}-n： Docker Compose 安装包名称（可选，仅离线安装时使用，默认为在线安装）"
   echo -e "  ${COLOR_BLUE}-a： 仅安装 Docker Engine（可选，默认安装 Docker Engine 和 Docker Compose ）"
   echo -e "  ${COLOR_BLUE}-b： 仅安装 Docker Compose（可选，默认安装 Docker Engine 和 Docker Compose ）"
@@ -353,7 +353,7 @@ search_cpu_arch () {
 create_dir () {
   log_info '------------------------------ 开始创建相关目录... ------------------------------'
 
-  mkdir -pv "${DOCKER_INSTALL_DIR}"
+  mkdir -pv "${DOCKER_INSTALL_DIR}"/{bin,conf}
   mkdir -pv "${DOCKER_DATA_DIR}"
   mkdir -pv /etc/docker
 
@@ -484,7 +484,7 @@ remove_docker_compose_package () {
 install_docker_engine () {
   log_info '------------------------------ 开始安装 Docker Engine... ------------------------------'
 
-  tar zxvf "${DOCKER_PACKAGE_NAME}" -C "${DOCKER_INSTALL_DIR}" --strip-components 1
+  tar zxvf "${DOCKER_PACKAGE_NAME}" -C "${DOCKER_INSTALL_DIR}"/bin --strip-components 1
 
   log_info '------------------------------ Docker Engine 安装完成! ------------------------------'
 }
@@ -493,7 +493,7 @@ install_docker_engine () {
 backup_docker_engine () {
   log_info '------------------------------ 开始备份 Docker Engine... ------------------------------'
 
-  backup_file "${DOCKER_INSTALL_DIR}"
+  backup_file "${DOCKER_INSTALL_DIR}"/bin
 
   log_info '------------------------------ Docker Engine 备份完成! ------------------------------'
 }
@@ -502,9 +502,12 @@ backup_docker_engine () {
 install_docker_compose () {
   log_info '------------------------------ 开始安装 Docker Compose... ------------------------------'
 
-  cp -rpf ./"${DOCKER_COMPOSE_PACKAGE_NAME}" "${DOCKER_INSTALL_DIR}"/docker-compose
-  chown docker:docker "${DOCKER_INSTALL_DIR}"/docker-compose
-  chmod +x "${DOCKER_INSTALL_DIR}"/docker-compose
+  cp -rpf ./"${DOCKER_COMPOSE_PACKAGE_NAME}" "${DOCKER_INSTALL_DIR}"/bin/docker-compose
+  chown docker:docker "${DOCKER_INSTALL_DIR}"/bin/docker-compose
+  chmod +x "${DOCKER_INSTALL_DIR}"/bin/docker-compose
+
+  mkdir -pv "${DOCKER_INSTALL_DIR}"/conf/cli-plugins
+  cp -rpf "${DOCKER_INSTALL_DIR}"/bin/docker-compose "${DOCKER_INSTALL_DIR}"/conf/cli-plugins/docker-compose
 
   log_info '------------------------------ Docker Compose 安装完成! ------------------------------'
 }
@@ -513,8 +516,8 @@ install_docker_compose () {
 backup_docker_compose () {
   log_info '------------------------------ 开始备份 Docker Compose... ------------------------------'
 
-  mkdir -pv "${DOCKER_INSTALL_DIR}"'_bak_'"${DATETIME}"
-  cp -rpf "${DOCKER_INSTALL_DIR}"/docker-compose "${DOCKER_INSTALL_DIR}"'_bak_'"${DATETIME}"/docker-compose
+  mkdir -pv "${DOCKER_INSTALL_DIRn}"'_bin_bak_'"${DATETIME}"
+  cp -rpf "${DOCKER_INSTALL_DIR}"/bin/docker-compose "${DOCKER_INSTALL_DIR}"'_bin_bak_'"${DATETIME}"/docker-compose
 
   log_info '------------------------------ Docker Compose 备份完成! ------------------------------'
 }
@@ -533,7 +536,8 @@ _write_env_block () {
 
   cat >> "$target" <<EOF
 # Docker Env Begin
-export DOCKER_HOME=${DOCKER_INSTALL_DIR}
+export DOCKER_HOME=${DOCKER_INSTALL_DIR}/bin
+export DOCKER_CONFIG=${DOCKER_INSTALL_DIR}/conf
 export PATH=\$PATH:\$DOCKER_HOME
 # Docker Env End
 EOF
@@ -578,7 +582,7 @@ config_service () {
 
   cp -rpf docker.service "${SYSTEMD_DIR}"/docker.service
   cp -rpf docker.socket "${SYSTEMD_DIR}"/docker.socket
-  sed -i 's#{{DOCKER_BIN_DIR}}#'"${DOCKER_INSTALL_DIR}"'#g' "${SYSTEMD_DIR}"/docker.service
+  sed -i 's#{{DOCKER_BIN_DIR}}#'"${DOCKER_INSTALL_DIR}"/bin'#g' "${SYSTEMD_DIR}"/docker.service
   systemctl daemon-reload
 
   log_info '------------------------------ 系统服务配置完成! ------------------------------'
@@ -613,8 +617,8 @@ config_docker_engine () {
     log_error "/etc/docker/daemon.json 存在未替换的占位符，请检查模板！"
   fi
 
-  chown -R docker:docker "${DOCKER_INSTALL_DIR}"
-  chmod -R 755 "${DOCKER_INSTALL_DIR}"
+  chown -R docker:docker "${DOCKER_INSTALL_DIR}"/bin
+  chmod -R 755 "${DOCKER_INSTALL_DIR}"/bin
   # 数据目录仅改 owner，不递归 chmod，避免破坏镜像层原有权限
   chown -R docker:docker "${DOCKER_DATA_DIR}"
   chmod 711 "${DOCKER_DATA_DIR}"
