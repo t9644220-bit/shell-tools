@@ -1,0 +1,32 @@
+# kubeadm 配置模板（由 kubernetes-tools 渲染后生成 <安装目录>/conf/kubeadm-config.yaml）
+# 双花括号包裹的大写字段为占位符，请勿删除；其余字段可按需调整，参考：
+# https://kubernetes.io/docs/reference/config-api/kubeadm-config.v1beta4/
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+localAPIEndpoint:
+  advertiseAddress: {{ADVERTISE_ADDRESS}}
+  bindPort: 6443
+nodeRegistration:
+  criSocket: {{CRI_SOCKET}}
+  imagePullPolicy: IfNotPresent
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+kubernetesVersion: v{{K8S_VERSION}}
+imageRepository: {{IMAGE_REPOSITORY}}
+controlPlaneEndpoint: "{{CONTROL_PLANE_ENDPOINT}}"
+networking:
+  dnsDomain: cluster.local
+  podSubnet: {{POD_CIDR}}
+  serviceSubnet: {{SERVICE_CIDR}}
+etcd:
+  local:
+    dataDir: {{ETCD_DATA_DIR}}
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+cgroupDriver: systemd
+---
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+mode: {{KUBE_PROXY_MODE}}

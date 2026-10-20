@@ -11,8 +11,9 @@
 | cvs | ✅ | ✅ | ✅ | 自动识别 `yum`、`dnf`、`zypper`、`apt`；RHEL 需可用 EPEL 源 |
 | sp | ⚠️ | ✅ | ⚠️ | 依赖 systemd；`/etc/sysconfig/proxy` 仅 SUSE 系提供，其他发行版自动跳过该步骤 |
 | docker-tools | ✅ | ✅ | ✅ | 依赖 systemd，仅支持 x86_64、aarch64，详见 [docker-tools/README.md](docker-tools/README.md) |
+| kubernetes-tools | ✅ | ✅ | ✅ | 依赖 systemd，仅支持 x86_64、aarch64，详见 [kubernetes-tools/README.md](kubernetes-tools/README.md) |
 
-> ✅：完整支持；⚠️：部分功能不可用（见说明）。不使用 systemd 的发行版（如 Alpine）不支持 `sp`、`docker-tools`。
+> ✅：完整支持；⚠️：部分功能不可用（见说明）。不使用 systemd 的发行版（如 Alpine）不支持 `sp`、`docker-tools`、`kubernetes-tools`。
 
 <br/>
 
@@ -279,3 +280,48 @@ docker-tools 参数 选项
   - 设置 Docker Swarm（manager） ： `docker-tools swarm`
   - 设置 Docker Swarm（worker） ： `docker-tools -r worker -m 192.168.0.100 -t SWMTKN-1-xxx swarm`
   - 查看 Docker 信息 ： `docker-tools info`
+
+<br/>
+
+## kubernetes-tools
+
+    Kubernetes 工具：基于 kubeadm + containerd，以静态二进制包安装、升级、卸载 Kubernetes 集群，支持单节点、一主多从、高可用及离线安装。
+
+详细文档见 [kubernetes-tools/README.md](kubernetes-tools/README.md)（用户手册）和 [kubernetes-tools/DESIGN.md](kubernetes-tools/DESIGN.md)（设计方案），发布包见 [releases](releases) 目录。
+
+**所需文件：**
+
+- `kubernetes-tools`、`kubeadm-config.yaml`、`containerd.service`、`kubelet.service`、`10-kubeadm.conf` 需放在同一目录（发布包已包含）
+- 离线安装时，安装包需放在该目录下的 `packages` 目录（通过 `kubernetes-tools download` 和 `kubernetes-tools save-images` 生成）
+
+**使用方式**:
+
+```
+kubernetes-tools 参数 选项
+```
+
+**常用参数**：
+
+  - `-v`： Kubernetes 版本（可选，默认安装 1.37.1 版本）
+  - `-r`： 节点角色（可选，默认 master，可选 master、worker、control-plane）
+  - `-m` / `-t` / `-s` / `-c`： 加入集群的 API Server 地址 / Token / CA 证书哈希 / 证书密钥
+  - `-o`： 离线安装（可选，默认在线安装）
+  - `-n`： 网络插件（可选，默认 flannel，可选 flannel、calico、none）
+  - `-g` / `-w`： 镜像仓库 / 镜像加速
+  - `-u`： 允许在控制平面节点调度 Pod（单节点集群）
+  - 完整参数见 `kubernetes-tools help`
+
+**选项说明**：
+
+  - `help`、`version`、`download`、`save-images`、`install`、`init`、`join`、`token`、`reset`、`uninstall`、`update`、`start`、`stop`、`restart`、`enable`、`disable`、`info`
+
+**示例**：
+
+  - 安装单节点集群 ： `kubernetes-tools -u install`
+  - 安装控制平面节点 ： `kubernetes-tools install`
+  - 安装工作节点 ： `kubernetes-tools -r worker -m 192.168.1.10:6443 -t abcdef.0123456789abcdef -s sha256:xxx install`
+  - 下载离线安装包 ： `kubernetes-tools download`
+  - 离线安装 ： `kubernetes-tools -o install`
+  - 生成节点加入命令 ： `kubernetes-tools token`
+  - 升级 Kubernetes ： `kubernetes-tools -v 1.37.2 update`
+  - 卸载 Kubernetes ： `kubernetes-tools uninstall`

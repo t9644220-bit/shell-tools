@@ -1,0 +1,16 @@
+# Managed by kubernetes-tools
+[Unit]
+Description=kubelet: The Kubernetes Node Agent
+Documentation=https://kubernetes.io/docs/
+Wants=network-online.target containerd.service
+After=network-online.target containerd.service
+
+[Service]
+Environment=PATH={{K8S_BIN_DIR}}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart={{K8S_BIN_DIR}}/kubelet
+Restart=always
+StartLimitInterval=0
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
