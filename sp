@@ -4,7 +4,7 @@
 
 # 参数配置
 ## 版本号
-VERSION="0.1.0"
+VERSION="0.2.0"
 ## 当前的日期、日期时间
 DATE=`date +%Y%m%d`
 DATETIME=`date +%Y%m%d`_`date +%H%M%S`
@@ -22,7 +22,7 @@ help () {
 }
 ## 版本号
 version () {
- echo 'sp '$version
+ echo 'sp '$VERSION
 }
 
 ## 设置 systemd 代理
@@ -43,7 +43,14 @@ setSystemdProxy () {
 ## 设置用户代理
 setUserProxy () {
   echo '------------------------------ 开始设置用户代理 （ /etc/sysconfig/proxy ） ... ------------------------------'
-  
+
+  # /etc/sysconfig/proxy 为 openSUSE/SLES 特有文件，其他发行版跳过此步骤
+  if [ ! -f /etc/sysconfig/proxy ]; then
+    echo '未找到 /etc/sysconfig/proxy（仅 openSUSE/SLES 提供），跳过用户代理设置'
+    echo '------------------------------ 用户代理设置已跳过! ------------------------------'
+    return 0
+  fi
+
   cp -rpf /etc/sysconfig/proxy /etc/sysconfig/proxy.bak.$DATE
   sed -i 's#PROXY_ENABLED="no"#PROXY_ENABLED="yes"#g' /etc/sysconfig/proxy
   sed -i 's#HTTP_PROXY=""#HTTP_PROXY="http://'$PROXY_URL'"#g' /etc/sysconfig/proxy
