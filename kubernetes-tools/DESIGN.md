@@ -133,6 +133,7 @@ flowchart LR
 | `containerd.service` | containerd 服务，取自上游，`PATH` 加入安装目录 | `K8S_BIN_DIR` |
 | `kubelet.service` | kubelet 服务，取自 kubernetes/release，依赖 containerd | `K8S_BIN_DIR` |
 | `10-kubeadm.conf` | kubelet drop-in，加载 kubeadm 生成的参数 | `K8S_BIN_DIR` |
+| `README.md`、`README_EN.md`、`README_JA.md` | 中、英、日三语用户手册 | — |
 | `packages/` | 安装包目录，由 `download`、在线安装或 `save-images` 生成，不纳入版本库 | — |
 
 模板文件统一通过 `SCRIPT_DIR`（脚本所在目录）定位，因此可以在任意目录执行脚本。docker-tools 要求在脚本所在目录执行，这一点做了改进。
@@ -461,5 +462,5 @@ server = "https://registry-1.docker.io"
 | 单机执行 | 每台节点都要单独执行 | 增加基于 SSH 的批量部署 |
 | `update` 只升级 Kubernetes 组件 | containerd、runc、CNI 需要手动替换 | 增加运行时升级命令 |
 | 仅支持 IPv4 | 地址探测和 `-m` 默认端口拼接按 IPv4 处理 | 支持 IPv6 和双栈 |
-| 仅提供中文文档 | docker-tools 有中、英、日三语文档 | 补充 README_EN、README_JA |
+| 设计文档仅有中文 | 用户手册已有中、英、日三语版本（README.md / README_EN.md / README_JA.md），DESIGN.md 仅有中文 | 按需补充英文版设计文档 |
 | 不自动 drain | 升级和卸载前需要在控制平面手动 drain | 在控制平面节点上提供 drain/uncordon 封装 |

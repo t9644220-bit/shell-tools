@@ -6,6 +6,8 @@
 
 Kubernetes 集群自动化安装、管理和维护工具。基于 **kubeadm + containerd**，用静态二进制包安装，支持单节点、一主多从和高可用集群，也支持在线和离线安装。
 
+[English](README_EN.md) | [日本語](README_JA.md)
+
 > 设计方案与代码结构见 [DESIGN.md](DESIGN.md)。
 
 ## 📋 目录
@@ -575,7 +577,9 @@ kubernetes-tools/
 ├── containerd.service      # containerd systemd 服务模板
 ├── kubelet.service         # kubelet systemd 服务模板
 ├── 10-kubeadm.conf         # kubelet systemd drop-in 模板（kubeadm 参数）
-├── README.md               # 用户手册
+├── README.md               # 用户手册（中文）
+├── README_EN.md            # 用户手册（英文）
+├── README_JA.md            # 用户手册（日文）
 ├── DESIGN.md               # 设计方案
 └── packages/               # 安装包目录（download 或在线安装时生成）
 ```
