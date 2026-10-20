@@ -1,1302 +1,670 @@
-\# Docker Tools
+# Docker Tools
 
-
-
-\[!\[Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://git.hty1024.com/HTY1024/shell\_tools/src/branch/main/docker-tools)
-
-\[!\[License](https://img.shields.io/badge/license-GNU-green.svg)](https://git.hty1024.com/HTY1024/shell\_tools/src/branch/main/LICENSE)
-
-\[!\[Shell](https://img.shields.io/badge/shell-bash-orange.svg)](https://www.gnu.org/software/bash/)
-
-
+[![Version](https://img.shields.io/badge/version-2.4.0-blue.svg)](https://git.hty1024.com/HTY1024/shell_tools/src/branch/main/docker-tools)
+[![License](https://img.shields.io/badge/license-GNU-green.svg)](https://git.hty1024.com/HTY1024/shell_tools/src/branch/main/LICENSE)
+[![Shell](https://img.shields.io/badge/shell-bash-orange.svg)](https://www.gnu.org/software/bash/)
 
 Docker 自动化安装、管理和维护工具，支持 Docker Engine、Docker Compose 和 Docker Swarm 的一键部署。
 
-
-
-\[English](README\_EN.md) | \[日本語](README\_JA.md)
-
-
-
-\## 📋 目录
-
-
-
-\- \[功能特性](#功能特性)
-
-\- \[系统要求](#系统要求)
-
-\- \[快速开始](#快速开始)
-
-\- \[安装方式](#安装方式)
-
-\- \[使用说明](#使用说明)
-
-\- \[配置参数](#配置参数)
-
-\- \[常见问题](#常见问题)
-
-\- \[故障排除](#故障排除)
-
-\- \[贡献指南](#贡献指南)
-
-\- \[许可证](#许可证)
-
-
-
-\## ✨ 功能特性
-
-
-
-\### 核心功能
-
-\- ✅ \*\*一键安装\*\* - 自动化安装 Docker Engine 和 Docker Compose
-
-\- ✅ \*\*在线/离线安装\*\* - 支持在线下载和离线安装包部署
-
-\- ✅ \*\*版本管理\*\* - 支持指定版本安装和版本更新
-
-\- ✅ \*\*集群支持\*\* - 内置 Docker Swarm 集群配置
-
-\- ✅ \*\*完整卸载\*\* - 彻底清理 Docker 相关文件和配置
-
-\- ✅ \*\*自动备份\*\* - 操作前自动备份重要配置文件
-
-
-
-\### 系统管理
-
-\- 🔧 自动配置系统内核参数
-
-\- 🔧 自动创建 Docker 用户和用户组
-
-\- 🔧 自动配置环境变量
-
-\- 🔧 自动配置 systemd 服务
-
-\- 🔧 支持开机自启动设置
-
-
-
-\### 用户体验
-
-\- 🎨 彩色日志输出，清晰易读
-
-\- 🎨 详细的操作提示和进度显示
-
-\- 🎨 交互式确认，防止误操作
-
-\- 🎨 完善的错误处理和提示
-
-
-
-\## 💻 系统要求
-
-
-
-\### 支持的操作系统
-
-\- CentOS 7/8/9
-
-\- RHEL 7/8/9
-
-\- Ubuntu 18.04/20.04/22.04
-
-\- Debian 10/11/12
-
-\- openSUSE Leap 15.x/16.x
-
-\- 其他支持 systemd 的 Linux 发行版
-
-
-
-\### 支持的 CPU 架构
-
-\- x86\_64 (amd64)
-
-\- aarch64 (arm64) - 部分支持
-
-\- armv7l - 部分支持
-
-
-
-\### 系统要求
-
-\- \*\*操作系统\*\*: Linux (内核 3.10+)
-
-\- \*\*权限\*\*: root 或 sudo
-
-\- \*\*磁盘空间\*\*: 至少 10GB 可用空间
-
-\- \*\*内存\*\*: 建议 2GB 以上
-
-\- \*\*依赖工具\*\*: 
-
-&nbsp; - `iptables` (必需)
-
-&nbsp; - `tar` (必需)
-
-&nbsp; - `curl` 或 `wget` (在线安装时必需)
-
-
-
-\## 🚀 快速开始
-
-
-
-\### 1. 下载脚本
-
-
+[English](README_EN.md) | [日本語](README_JA.md)
+
+## 📋 目录
+
+- [功能特性](#功能特性)
+- [系统要求](#系统要求)
+- [快速开始](#快速开始)
+- [安装方式](#安装方式)
+- [使用说明](#使用说明)
+- [配置参数](#配置参数)
+- [常见问题](#常见问题)
+- [故障排除](#故障排除)
+- [贡献指南](#贡献指南)
+- [许可证](#许可证)
+
+## ✨ 功能特性
+
+### 核心功能
+- ✅ **一键安装** - 自动化安装 Docker Engine 和 Docker Compose
+- ✅ **在线/离线安装** - 支持在线下载和离线安装包部署
+- ✅ **版本管理** - 支持指定版本安装和版本更新
+- ✅ **集群支持** - 内置 Docker Swarm 集群配置
+- ✅ **完整卸载** - 彻底清理 Docker 相关文件和配置
+- ✅ **自动备份** - 操作前自动备份重要配置文件
+
+### 系统管理
+- 🔧 自动配置系统内核参数
+- 🔧 自动创建 Docker 用户和用户组
+- 🔧 自动配置环境变量
+- 🔧 自动配置 systemd 服务
+- 🔧 支持开机自启动设置
+
+### 用户体验
+- 🎨 彩色日志输出，清晰易读
+- 🎨 详细的操作提示和进度显示
+- 🎨 交互式确认，防止误操作
+- 🎨 完善的错误处理和提示
+
+## 💻 系统要求
+
+### 支持的操作系统
+- CentOS 7/8/9
+- RHEL 7/8/9
+- Ubuntu 18.04/20.04/22.04
+- Debian 10/11/12
+- openSUSE Leap 15.x/16.x
+- 其他支持 systemd 的 Linux 发行版
+
+### 支持的 CPU 架构
+- x86_64 (amd64)
+- aarch64 (arm64)
+- 其他架构（如 armv7l）不支持，脚本会直接报错退出
+
+### 系统要求
+- **操作系统**: Linux (内核 3.10+)
+- **权限**: root 或 sudo
+- **磁盘空间**: 至少 10GB 可用空间
+- **内存**: 建议 2GB 以上
+- **依赖工具**: 
+  - `iptables` (必需)
+  - `tar` (必需)
+  - `curl` 和 `wget` (在线安装时必需)
+
+## 🚀 快速开始
+
+### 1. 下载脚本
 
 ```bash
+# 方式一：使用 git 克隆
+git clone https://git.hty1024.com/HTY1024/shell_tools.git
+cd shell_tools/docker-tools
 
-\# 方式一：使用 git 克隆
-
-git https://git.hty1024.com/HTY1024/shell\_tools.git
-
-cd shell\_tools/docker-tools
-
-
-
-\# 方式二：直接下载
-
-wget https://git.hty1024.com/HTY1024/shell\_tools/src/branch/main/releases/docker-tools\_v2.1.0.zip
-
-unzip docker-tools\_v2.1.0.zip
-
+# 方式二：直接下载
+wget https://git.hty1024.com/HTY1024/shell_tools/raw/branch/main/releases/docker-tools_v2.4.0.zip
+unzip docker-tools_v2.4.0.zip -d docker-tools && cd docker-tools
 ```
 
-
-
-\### 2. 赋予执行权限
-
-
+### 2. 赋予执行权限
 
 ```bash
-
-chmod +x docker-tools.sh
-
+chmod +x docker-tools
 ```
 
-
-
-\### 3. 执行安装
-
-
+### 3. 执行安装
 
 ```bash
+# 使用默认配置安装
+sudo ./docker-tools install
 
-\# 使用默认配置安装
-
-sudo ./docker-tools.sh install
-
-
-
-\# 或者指定版本安装
-
-sudo ./docker-tools.sh -v 29.4.1 -c v5.1.3 install
-
+# 或者指定版本安装
+sudo ./docker-tools -v 29.5.2 -c v5.1.4 install
 ```
 
-
-
-\### 4. 验证安装
-
-
+### 4. 验证安装
 
 ```bash
-
-\# 检查 Docker 版本
-
+# 检查 Docker 版本
 docker --version
 
-
-
-\# 检查 Docker Compose 版本
-
+# 检查 Docker Compose 版本
 docker-compose --version
 
-
-
-\# 查看 Docker 信息
-
+# 查看 Docker 信息
 docker info
-
 ```
 
+## 📦 安装方式
 
+### 方式一：在线安装（推荐）
 
-\## 📦 安装方式
-
-
-
-\### 方式一：在线安装（推荐）
-
-
-
-\*\*优点\*\*: 自动下载最新版本，无需准备安装包
-
-
+**优点**: 自动下载最新版本，无需准备安装包
 
 ```bash
+# 默认安装（Docker 29.5.2 + Compose v5.1.4）
+sudo ./docker-tools install
 
-\# 默认安装（Docker 29.4.1 + Compose v5.1.3）
+# 指定版本安装
+sudo ./docker-tools -v 29.5.2 -c v5.1.4 install
 
-sudo ./docker-tools.sh install
-
-
-
-\# 指定版本安装
-
-sudo ./docker-tools.sh -v 29.4.1 -c v5.1.3 install
-
-
-
-\# 自定义安装目录
-
-sudo ./docker-tools.sh -i /data/docker/bin -d /data/docker/data install
-
+# 自定义安装目录
+sudo ./docker-tools -i /data/docker -d /data/docker/data install
 ```
 
+### 方式二：离线安装
 
+**优点**: 适用于无网络环境或网络受限的服务器
 
-\### 方式二：离线安装
-
-
-
-\*\*优点\*\*: 适用于无网络环境或网络受限的服务器
-
-
-
-\#### 步骤 1: 准备安装包
-
-
+#### 步骤 1: 准备安装包
 
 在有网络的机器上下载安装包：
 
-
-
 ```bash
+# 下载 Docker Engine
+wget https://download.docker.com/linux/static/stable/x86_64/docker-29.5.2.tgz
 
-\# 下载 Docker Engine
-
-wget https://download.docker.com/linux/static/stable/x86\_64/docker-29.4.1.tgz
-
-
-
-\# 下载 Docker Compose
-
-wget https://github.com/docker/compose/releases/download/v5.1.3/docker-compose-linux-x86\_64
-
+# 下载 Docker Compose
+wget https://github.com/docker/compose/releases/download/v5.1.4/docker-compose-linux-x86_64
 ```
 
-
-
-\#### 步骤 2: 上传到目标服务器
-
-
+#### 步骤 2: 上传到目标服务器
 
 ```bash
-
-\# 将安装包和脚本上传到同一目录
-
-scp docker-29.4.1.tgz docker-compose-linux-x86\_64 docker-tools.sh user@server:/path/to/dir/
-
+# 将安装包和脚本上传到同一目录
+scp docker-29.5.2.tgz docker-compose-linux-x86_64 docker-tools user@server:/path/to/dir/
 ```
 
-
-
-\#### 步骤 3: 执行离线安装
-
-
+#### 步骤 3: 执行离线安装
 
 ```bash
-
-sudo ./docker-tools.sh -p docker-29.4.1.tgz -n docker-compose-linux-x86\_64 install
-
+sudo ./docker-tools -p docker-29.5.2.tgz -n docker-compose-linux-x86_64 install
 ```
 
-
-
-\### 方式三：仅安装 Docker Engine
-
-
+### 方式三：仅安装 Docker Engine
 
 ```bash
-
-\# 只安装 Docker Engine，不安装 Docker Compose
-
-sudo ./docker-tools.sh -a install
-
+# 只安装 Docker Engine，不安装 Docker Compose
+sudo ./docker-tools -a install
 ```
 
-
-
-\### 方式四：仅安装 Docker Compose
-
-
+### 方式四：仅安装 Docker Compose
 
 ```bash
-
-\# 只安装 Docker Compose（需要已安装 Docker Engine）
-
-sudo ./docker-tools.sh -b install
-
+# 只安装 Docker Compose（会自动创建 docker 用户、安装目录并配置环境变量；若 Docker Engine 正在运行会自动重启）
+sudo ./docker-tools -b install
 ```
 
+## 📖 使用说明
 
-
-\## 📖 使用说明
-
-
-
-\### 基本命令
-
-
+### 基本命令
 
 ```bash
+# 查看帮助信息
+./docker-tools help
 
-\# 查看帮助信息
+# 查看版本信息
+./docker-tools version
 
-./docker-tools.sh help
+# 安装 Docker
+sudo ./docker-tools install
 
+# 卸载 Docker
+sudo ./docker-tools uninstall
 
+# 更新 Docker
+sudo ./docker-tools update
 
-\# 查看版本信息
+# 启动 Docker
+sudo ./docker-tools start
 
-./docker-tools.sh version
+# 停止 Docker
+sudo ./docker-tools stop
 
+# 重启 Docker
+sudo ./docker-tools restart
 
+# 设置开机自启
+sudo ./docker-tools enable
 
-\# 安装 Docker
+# 取消开机自启
+sudo ./docker-tools disable
 
-sudo ./docker-tools.sh install
-
-
-
-\# 卸载 Docker
-
-sudo ./docker-tools.sh uninstall
-
-
-
-\# 更新 Docker
-
-sudo ./docker-tools.sh update
-
-
-
-\# 启动 Docker
-
-sudo ./docker-tools.sh start
-
-
-
-\# 停止 Docker
-
-sudo ./docker-tools.sh stop
-
-
-
-\# 重启 Docker
-
-sudo ./docker-tools.sh restart
-
-
-
-\# 设置开机自启
-
-sudo ./docker-tools.sh enable
-
-
-
-\# 取消开机自启
-
-sudo ./docker-tools.sh disable
-
-
-
-\# 查看 Docker 信息
-
-sudo ./docker-tools.sh info
-
+# 查看 Docker 信息
+sudo ./docker-tools info
 ```
 
+### 高级用法
 
-
-\### 高级用法
-
-
-
-\#### 1. 自定义安装目录
-
-
+#### 1. 自定义安装目录
 
 ```bash
-
-\# 指定安装目录和数据目录
-
-sudo ./docker-tools.sh \\
-
-&nbsp; -i /data/docker/bin \\
-
-&nbsp; -d /data/docker/data \\
-
-&nbsp; install
-
+# 指定安装目录和数据目录
+sudo ./docker-tools \
+  -i /data/docker \
+  -d /data/docker/data \
+  install
 ```
 
-
-
-\#### 2. 指定版本安装
-
-
+#### 2. 指定版本安装
 
 ```bash
-
-\# 安装特定版本的 Docker 和 Compose
-
-sudo ./docker-tools.sh \\
-
-&nbsp; -v 28.2.1 \\
-
-&nbsp; -c v2.36.2 \\
-
-&nbsp; install
-
+# 安装特定版本的 Docker 和 Compose
+sudo ./docker-tools \
+  -v 28.2.1 \
+  -c v2.36.2 \
+  install
 ```
 
-
-
-\#### 3. 离线安装
-
-
+#### 3. 离线安装
 
 ```bash
-
-\# 使用本地安装包进行离线安装
-
-sudo ./docker-tools.sh \\
-
-&nbsp; -p docker-29.4.1.tgz \\
-
-&nbsp; -n docker-compose-linux-x86\_64 \\
-
-&nbsp; install
-
+# 使用本地安装包进行离线安装
+sudo ./docker-tools \
+  -p docker-29.5.2.tgz \
+  -n docker-compose-linux-x86_64 \
+  install
 ```
 
+#### 4. Docker Swarm 集群部署
 
-
-\#### 4. Docker Swarm 集群部署
-
-
-
-\*\*Manager 节点（主节点）\*\*:
-
-
+**Manager 节点（主节点）**:
 
 ```bash
+# 安装 Docker 并初始化 Swarm Manager
+sudo ./docker-tools -s install
 
-\# 安装 Docker 并初始化 Swarm Manager
-
-sudo ./docker-tools.sh -s install
-
-
-
-\# 安装完成后，获取 Worker Token
-
+# 安装完成后，获取 Worker Token
 docker swarm join-token worker
-
-\# 输出示例：
-
-\# docker swarm join --token SWMTKN-1-xxx... 192.168.1.100:2377
-
+# 输出示例：
+# docker swarm join --token SWMTKN-1-xxx... 192.168.1.100:2377
 ```
 
-
-
-\*\*Worker 节点（工作节点）\*\*:
-
-
+**Worker 节点（工作节点）**:
 
 ```bash
-
-\# 使用 Manager 的 IP 和 Token 加入集群
-
-sudo ./docker-tools.sh \\
-
-&nbsp; -s \\
-
-&nbsp; -r worker \\
-
-&nbsp; -m 192.168.1.100 \\
-
-&nbsp; -t SWMTKN-1-xxx... \\
-
-&nbsp; install
-
+# 使用 Manager 的 IP 和 Token 加入集群
+sudo ./docker-tools \
+  -s \
+  -r worker \
+  -m 192.168.1.100 \
+  -t SWMTKN-1-xxx... \
+  install
 ```
 
-
-
-\#### 5. 更新 Docker 版本
-
-
+#### 5. 更新 Docker 版本
 
 ```bash
+# 在线更新到指定版本
+sudo ./docker-tools -v 29.5.2 update
 
-\# 在线更新到指定版本
-
-sudo ./docker-tools.sh -v 29.4.1 update
-
-
-
-\# 离线更新
-
-sudo ./docker-tools.sh -p docker-29.4.1.tgz update
-
+# 离线更新（仅更新 Docker Engine；同时更新 Compose 时需再加 -n 指定其安装包）
+sudo ./docker-tools -a -p docker-29.5.2.tgz update
 ```
 
+## ⚙️ 配置参数
 
-
-\## ⚙️ 配置参数
-
-
-
-\### 命令行参数
-
-
+### 命令行参数
 
 | 参数 | 说明 | 默认值 | 示例 |
-
 |------|------|--------|------|
-
-| `-v` | Docker Engine 版本 | 29.4.1 | `-v 28.2.1` |
-
-| `-i` | Docker 安装目录 | /opt/docker/bin | `-i /data/docker/bin` |
-
+| `-v` | Docker Engine 版本 | 29.5.2 | `-v 28.2.1` |
+| `-i` | Docker 安装目录 | /opt/docker | `-i /data/docker` |
 | `-d` | Docker 数据目录 | /opt/docker/data | `-d /data/docker/data` |
-
-| `-p` | Docker Engine 安装包名称（离线） | - | `-p docker-29.4.1.tgz` |
-
-| `-c` | Docker Compose 版本 | v5.1.3 | `-c v2.36.2` |
-
-| `-n` | Docker Compose 安装包名称（离线） | - | `-n docker-compose-linux-x86\_64` |
-
+| `-p` | Docker Engine 安装包名称（离线） | - | `-p docker-29.5.2.tgz` |
+| `-c` | Docker Compose 版本 | v5.1.4 | `-c v2.36.2` |
+| `-n` | Docker Compose 安装包名称（离线） | - | `-n docker-compose-linux-x86_64` |
 | `-a` | 仅安装 Docker Engine | false | `-a` |
-
 | `-b` | 仅安装 Docker Compose | false | `-b` |
-
 | `-s` | 启用 Docker Swarm | false | `-s` |
-
 | `-r` | Swarm 角色 (manager/worker) | manager | `-r worker` |
-
 | `-m` | Swarm Manager IP | 127.0.0.1 | `-m 192.168.1.100` |
-
 | `-t` | Swarm Token (worker 节点必需) | - | `-t SWMTKN-1-xxx...` |
 
-
-
-\### 脚本内配置
-
-
+### 脚本内配置
 
 可以直接修改脚本中的配置变量：
 
-
-
 ```bash
+# 编辑脚本
+vim docker-tools
 
-\# 编辑脚本
-
-vim docker-tools.sh
-
-
-
-\# 修改以下变量
-
-DOCKER\_VERSION=29.4.1              # Docker 版本
-
-DOCKER\_INSTALL\_DIR=/opt/docker/bin # 安装目录
-
-DOCKER\_DATA\_DIR=/opt/docker/data   # 数据目录
-
-NEED\_ENABLE\_DOCKER=true            # 是否开机自启
-
+# 修改以下变量
+DOCKER_VERSION=29.5.2              # Docker 版本
+DOCKER_INSTALL_DIR=/opt/docker     # 安装目录（程序位于 bin/，CLI 配置位于 conf/）
+DOCKER_DATA_DIR=/opt/docker/data   # 数据目录
+NEED_ENABLE_DOCKER=true            # 是否开机自启
 ```
 
-
-
-\### Docker Daemon 配置
-
-
+### Docker Daemon 配置
 
 默认配置文件 `daemon.json`:
 
-
-
 ```json
-
 {
-
-&nbsp; "data-root": "{{DOCKER\_DATA\_DIR}}",
-
-&nbsp; "storage-driver": "overlay2",
-
-&nbsp; "log-driver": "json-file",
-
-&nbsp; "log-opts": {
-
-&nbsp;   "max-size": "100m",
-
-&nbsp;   "max-file": "3"
-
-&nbsp; },
-
-&nbsp; "live-restore": {{DOCKER\_LIVE\_RESTORE}},
-
-&nbsp; "registry-mirrors": \[],
-
-&nbsp; "insecure-registries": \[]
-
+  "exec-opts" : ["native.cgroupdriver=systemd"],
+  "log-level": "warn",
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m",
+    "max-file": "5"
+  },
+  "registry-mirrors": [
+    "https://dockerpull.org",
+    "https://hub.geekery.cn",
+    "https://docker.1ms.run"
+  ],
+  "bip": "10.21.21.1/24",
+  "data-root": "{{DOCKER_DATA_DIR}}",
+  "live-restore": {{DOCKER_LIVE_RESTORE}}
 }
-
 ```
-
-
 
 可以根据需要修改配置：
 
-
-
 ```bash
-
-\# 编辑配置文件
-
+# 编辑配置文件
 vim daemon.json
 
-
-
-\# 添加镜像加速器
-
-"registry-mirrors": \[
-
-&nbsp; "https://mirror.ccs.tencentyun.com",
-
-&nbsp; "https://docker.mirrors.ustc.edu.cn"
-
+# 添加镜像加速器
+"registry-mirrors": [
+  "https://mirror.ccs.tencentyun.com",
+  "https://docker.mirrors.ustc.edu.cn"
 ]
 
-
-
-\# 添加私有仓库
-
-"insecure-registries": \[
-
-&nbsp; "192.168.1.100:5000"
-
+# 添加私有仓库
+"insecure-registries": [
+  "192.168.1.100:5000"
 ]
-
 ```
 
+## ❓ 常见问题
 
+### Q1: 安装失败，提示缺少依赖
 
-\## ❓ 常见问题
-
-
-
-\### Q1: 安装失败，提示缺少依赖
-
-
-
-\*\*A\*\*: 请先安装必要的依赖工具：
-
-
+**A**: 请先安装必要的依赖工具：
 
 ```bash
-
-\# CentOS/RHEL
-
+# CentOS/RHEL
 sudo yum install -y iptables tar curl
 
-
-
-\# Ubuntu/Debian
-
+# Ubuntu/Debian
 sudo apt-get install -y iptables tar curl
 
-
-
-\# openSUSE
-
+# openSUSE
 sudo zypper install -y iptables tar curl
-
 ```
 
+### Q2: 环境变量不生效
 
-
-\### Q2: 环境变量不生效
-
-
-
-\*\*A\*\*: 安装完成后需要手动执行：
-
-
+**A**: 安装完成后需要手动执行：
 
 ```bash
-
 source ~/.bashrc
-
 source /etc/profile
 
-
-
-\# 或者重新登录系统
-
+# 或者重新登录系统
 ```
 
+### Q3: Docker 服务启动失败
 
-
-\### Q3: Docker 服务启动失败
-
-
-
-\*\*A\*\*: 检查日志查找原因：
-
-
+**A**: 检查日志查找原因：
 
 ```bash
-
-\# 查看服务状态
-
+# 查看服务状态
 sudo systemctl status docker
 
-
-
-\# 查看详细日志
-
+# 查看详细日志
 sudo journalctl -u docker -n 50
 
-
-
-\# 检查配置文件
-
+# 检查配置文件
 sudo docker info
-
 ```
 
+### Q4: 离线安装时找不到安装包
 
-
-\### Q4: 离线安装时找不到安装包
-
-
-
-\*\*A\*\*: 确保安装包与脚本在同一目录：
-
-
+**A**: 确保安装包与脚本在同一目录：
 
 ```bash
+# 检查文件
+ls -lh docker-*.tgz docker-compose-*
 
-\# 检查文件
-
-ls -lh docker-\*.tgz docker-compose-\*
-
-
-
-\# 确保文件名正确
-
-./docker-tools.sh -p docker-29.4.1.tgz -n docker-compose-linux-x86\_64 install
-
+# 确保文件名正确
+./docker-tools -p docker-29.5.2.tgz -n docker-compose-linux-x86_64 install
 ```
 
+### Q5: 卸载后仍有残留文件
 
-
-\### Q5: 卸载后仍有残留文件
-
-
-
-\*\*A\*\*: 手动清理残留：
-
-
+**A**: 手动清理残留：
 
 ```bash
-
-\# 删除数据目录
-
+# 删除数据目录
 sudo rm -rf /opt/docker
-
 sudo rm -rf /var/lib/docker
 
-
-
-\# 删除配置文件
-
+# 删除配置文件
 sudo rm -rf /etc/docker
 
-
-
-\# 删除环境变量配置
-
+# 删除环境变量配置
 vim ~/.bashrc  # 删除 Docker Env 相关行
-
 vim /etc/profile
-
 ```
 
+### Q6: Docker Swarm 加入失败
 
-
-\### Q6: Docker Swarm 加入失败
-
-
-
-\*\*A\*\*: 检查网络和防火墙：
-
-
+**A**: 检查网络和防火墙：
 
 ```bash
-
-\# 检查端口连通性
-
+# 检查端口连通性
 telnet <manager-ip> 2377
 
-
-
-\# 开放必要端口（Manager 节点）
-
+# 开放必要端口（Manager 节点）
 sudo firewall-cmd --permanent --add-port=2377/tcp  # 集群管理
-
 sudo firewall-cmd --permanent --add-port=7946/tcp  # 节点通信
-
 sudo firewall-cmd --permanent --add-port=7946/udp
-
 sudo firewall-cmd --permanent --add-port=4789/udp  # overlay 网络
-
 sudo firewall-cmd --reload
 
-
-
-\# 或者临时关闭防火墙测试
-
+# 或者临时关闭防火墙测试
 sudo systemctl stop firewalld
-
 ```
 
+### Q7: 权限不足错误
 
-
-\### Q7: 权限不足错误
-
-
-
-\*\*A\*\*: 确保使用 root 权限：
-
-
+**A**: 确保使用 root 权限：
 
 ```bash
+# 使用 sudo
+sudo ./docker-tools install
 
-\# 使用 sudo
-
-sudo ./docker-tools.sh install
-
-
-
-\# 或切换到 root 用户
-
+# 或切换到 root 用户
 su -
-
-./docker-tools.sh install
-
+./docker-tools install
 ```
 
+### Q8: 更新后版本不正确
 
-
-\### Q8: 更新后版本不正确
-
-
-
-\*\*A\*\*: 清理缓存并重新安装：
-
-
+**A**: 清理缓存并重新安装：
 
 ```bash
+# 完全卸载
+sudo ./docker-tools uninstall
 
-\# 完全卸载
+# 清理在线安装时下载到当前目录的安装包
+rm -f docker-*.tgz* docker-compose-linux-*
 
-sudo ./docker-tools.sh uninstall
-
-
-
-\# 清理缓存
-
-sudo rm -rf /tmp/docker-\*
-
-
-
-\# 重新安装
-
-sudo ./docker-tools.sh -v 29.4.1 install
-
+# 重新安装
+sudo ./docker-tools -v 29.5.2 install
 ```
 
+## 🔧 故障排除
 
-
-\## 🔧 故障排除
-
-
-
-\### 日志位置
-
-
+### 日志位置
 
 ```bash
-
-\# 系统日志
-
+# 系统日志
 sudo journalctl -u docker -f
 
-
-
-\# Docker 日志
-
-sudo tail -f /var/log/docker.log
-
-
-
-\# 脚本日志（如果配置了）
-
-sudo tail -f /var/log/docker-tools.log
-
+# 脚本本身不写日志文件，运行输出直接打印到终端
 ```
 
+### 常见错误及解决方案
 
-
-\### 常见错误及解决方案
-
-
-
-\#### 错误 1: "Cannot connect to the Docker daemon"
-
-
+#### 错误 1: "Cannot connect to the Docker daemon"
 
 ```bash
-
-\# 检查服务状态
-
+# 检查服务状态
 sudo systemctl status docker
 
-
-
-\# 启动服务
-
+# 启动服务
 sudo systemctl start docker
 
-
-
-\# 检查 socket
-
+# 检查 socket
 sudo systemctl status docker.socket
-
 ```
 
-
-
-\#### 错误 2: "permission denied while trying to connect"
-
-
+#### 错误 2: "permission denied while trying to connect"
 
 ```bash
-
-\# 将当前用户添加到 docker 组
-
+# 将当前用户添加到 docker 组
 sudo usermod -aG docker $USER
 
-
-
-\# 重新登录或执行
-
+# 重新登录或执行
 newgrp docker
-
 ```
 
-
-
-\#### 错误 3: "Error response from daemon: conflict"
-
-
+#### 错误 3: "Error response from daemon: conflict"
 
 ```bash
-
-\# 清理冲突的容器/网络
-
+# 清理冲突的容器/网络
 docker system prune -a
 
-
-
-\# 或手动删除
-
+# 或手动删除
 docker rm -f $(docker ps -aq)
-
 docker network prune
-
 ```
 
-
-
-\#### 错误 4: "no space left on device"
-
-
+#### 错误 4: "no space left on device"
 
 ```bash
-
-\# 检查磁盘空间
-
+# 检查磁盘空间
 df -h
 
-
-
-\# 清理 Docker 数据
-
+# 清理 Docker 数据
 docker system prune -a --volumes
 
-
-
-\# 修改数据目录
-
-sudo ./docker-tools.sh -d /data/docker/data install
-
+# 修改数据目录
+sudo ./docker-tools -d /data/docker/data install
 ```
 
+### 性能优化
 
-
-\### 性能优化
-
-
-
-\#### 1. 调整存储驱动
-
-
+#### 1. 调整存储驱动
 
 ```bash
-
-\# 编辑 daemon.json
-
+# 编辑 daemon.json
 sudo vim /etc/docker/daemon.json
 
-
-
-\# 修改存储驱动
-
+# 修改存储驱动
 {
-
-&nbsp; "storage-driver": "overlay2",
-
-&nbsp; "storage-opts": \[
-
-&nbsp;   "overlay2.override\_kernel\_check=true"
-
-&nbsp; ]
-
+  "storage-driver": "overlay2",
+  "storage-opts": [
+    "overlay2.override_kernel_check=true"
+  ]
 }
 
-
-
-\# 重启 Docker
-
+# 重启 Docker
 sudo systemctl restart docker
-
 ```
 
-
-
-\#### 2. 配置日志轮转
-
-
+#### 2. 配置日志轮转
 
 ```bash
-
-\# 编辑 daemon.json
-
+# 编辑 daemon.json
 {
-
-&nbsp; "log-driver": "json-file",
-
-&nbsp; "log-opts": {
-
-&nbsp;   "max-size": "50m",
-
-&nbsp;   "max-file": "5"
-
-&nbsp; }
-
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "50m",
+    "max-file": "5"
+  }
 }
-
 ```
 
-
-
-\#### 3. 调整并发限制
-
-
+#### 3. 调整并发限制
 
 ```bash
-
-\# 编辑 daemon.json
-
+# 编辑 daemon.json
 {
-
-&nbsp; "max-concurrent-downloads": 10,
-
-&nbsp; "max-concurrent-uploads": 10
-
+  "max-concurrent-downloads": 10,
+  "max-concurrent-uploads": 10
 }
-
 ```
 
-
-
-\## 📁 文件结构
-
-
+## 📁 文件结构
 
 ```
-
 docker-tools/
-
-├── docker-tools.sh          # 主脚本
-
+├── docker-tools             # 主脚本
 ├── daemon.json              # Docker daemon 配置模板
-
 ├── docker.service           # systemd 服务文件
-
 ├── docker.socket            # systemd socket 文件
-
 ├── README.md                # 中文文档
-
-├── README\_EN.md             # 英文文档
-
-└── README\_JA.md             # 日文文档
-
+├── README_EN.md             # 英文文档
+└── README_JA.md             # 日文文档
 ```
 
+## 🔒 安全建议
 
-
-\## 🔒 安全建议
-
-
-
-1\. \*\*最小权限原则\*\*: 仅在必要时使用 root 权限
-
-2\. \*\*定期更新\*\*: 及时更新 Docker 到最新稳定版本
-
-3\. \*\*网络隔离\*\*: 使用防火墙限制 Docker API 访问
-
-4\. \*\*镜像安全\*\*: 只使用可信的镜像源
-
-5\. \*\*日志审计\*\*: 启用日志记录并定期审查
-
-6\. \*\*资源限制\*\*: 为容器设置 CPU 和内存限制
-
-
+1. **最小权限原则**: 仅在必要时使用 root 权限
+2. **定期更新**: 及时更新 Docker 到最新稳定版本
+3. **网络隔离**: 使用防火墙限制 Docker API 访问
+4. **镜像安全**: 只使用可信的镜像源
+5. **日志审计**: 启用日志记录并定期审查
+6. **资源限制**: 为容器设置 CPU 和内存限制
 
 ```bash
-
-\# 限制容器资源
-
-docker run -d \\
-
-&nbsp; --cpus="1.5" \\
-
-&nbsp; --memory="512m" \\
-
-&nbsp; --memory-swap="1g" \\
-
-&nbsp; nginx
-
+# 限制容器资源
+docker run -d \
+  --cpus="1.5" \
+  --memory="512m" \
+  --memory-swap="1g" \
+  nginx
 ```
 
+## 📝 更新日志
+### v2.4.0 (2026-10-20)
+#### 🐛 问题修复
+- 修复 `update` 更新 Docker Compose 时因变量名拼写错误（`DOCKER_INSTALL_DIRn`）在 `set -u` 下必定中止
+- 恢复默认在线安装（v2.0.0 起被误设为离线），与帮助信息一致；`-p` / `-n` 仍切换为离线安装
+- 离线安装包名称默认按 `-v` 指定的版本推导（`docker-<版本>.tgz`），`-v` 不再被忽略
+- `-b`（仅安装 Compose）可在全新机器上使用：自动创建 docker 用户、安装目录并配置环境变量，离线时不再要求 Engine 安装包
+- `uninstall` 在 `docker.service` 不存在时跳过停止/取消自启动，避免中止后续清理
+#### 📖 文档
+- 修复 README 的 Markdown 转义问题；脚本名统一为 `docker-tools`；`-i` 默认值更正为 `/opt/docker`；`daemon.json` 示例与实际模板保持一致
+- 帮助信息中 `-i` 说明与示例路径更正
+### v2.3.0 (2026-05-21)
+#### 🆕 版本更新
+- 默认 Docker Engine 升级至 **29.5.2**，默认 Docker Compose 升级至 **v5.1.4**
+#### ✨ 调整
+- 安装目录默认值由 `/opt/docker/bin` 改为 `/opt/docker`，程序放在 `bin/`，CLI 配置放在 `conf/`
+- 新增环境变量 `DOCKER_CONFIG=<安装目录>/conf`，Compose 同时安装为 CLI 插件（支持 `docker compose`）
+### v2.2.0 (2026-05-14)
+- 修复发布包中脚本为 CRLF 换行导致 Linux 上无法执行的问题，新增 `.gitattributes` 强制 LF
+### v2.1.0 (2026-04-24)
+#### 🆕 版本更新
+- 默认 Docker Engine 升级至 **29.4.1**
+- 默认 Docker Compose 升级至 **v5.1.3**
+#### 🐛 问题修复
+- 修复子命令调度：`case "$@"` 多参数无法匹配；`info` 未调用到 `info_docker`
+- 修复 `check_net` 中 TIMEOUT 位置参数误用，以及 2xx/3xx 被错误当作失败码
+- 修复 `backup_file` 对目录无效导致升级前未实际备份
+- 修复 `remove_env` 使用 sed 直删导致残留空行，改用范围删除
+- 修复 `docker.service` 中注释与 `ExecStart=` 残留混行
+- 修复拼写错误（Dokcer / Coimpose / Conpose）
+#### ✨ 健壮性增强
+- `config_env` 幂等化：重复安装不再重复追加 `~/.bashrc`、`/etc/profile`
+- 脚本内不再 `source ~/.bashrc`，避免 `set -u` 下被外部脚本污染中断
+- `daemon.json` 模板替换后校验，防止 `{{...}}` 占位符残留导致 JSON 非法
+- 数据目录仅改 owner，不再 `chmod -R 755`，避免破坏镜像层权限
+- `chown docker.docker` 更新为 `docker:docker`（点分隔语法已弃用）
+- 去掉 `useradd/groupadd` 硬编码 UID/GID=1001，避免与目标机冲突
+- `CPU_ARCH` 改为运行时探测，扩展支持 `aarch64`
+- `getopts` 增加 `?` / `:` 错误分支，且 `-r/-m/-t` 不再隐式启用 Swarm
+- Swarm worker 模式对 Manager IP 与 Token 强校验
+- `only_install_docker_compose` 在 Docker Engine 未运行时跳过 restart/info
+### v2.0.0
+- 重构日志系统、加入 `set -euo pipefail`、完善交互确认
+### v1.3.x / v1.2.x / v1.1.x
+- 详见 git 提交历史
+## 👤 作者
 
+**HTY1024**
 
-\## 📝 更新日志
+- Git: [@HTY1024](https://git.hty1024.com/HTY1024)
 
-\### v2.1.0 (2026-04-24)
-
-\#### 🆕 版本更新
-
-\- 默认 Docker Engine 升级至 \*\*29.4.1\*\*
-
-\- 默认 Docker Compose 升级至 \*\*v5.1.3\*\*
-
-\#### 🐛 问题修复
-
-\- 修复子命令调度：`case "$@"` 多参数无法匹配；`info` 未调用到 `info_docker`
-
-\- 修复 `check_net` 中 TIMEOUT 位置参数误用，以及 2xx/3xx 被错误当作失败码
-
-\- 修复 `backup_file` 对目录无效导致升级前未实际备份
-
-\- 修复 `remove_env` 使用 sed 直删导致残留空行，改用范围删除
-
-\- 修复 `docker.service` 中注释与 `ExecStart=` 残留混行
-
-\- 修复拼写错误（Dokcer / Coimpose / Conpose）
-
-\#### ✨ 健壮性增强
-
-\- `config_env` 幂等化：重复安装不再重复追加 `~/.bashrc`、`/etc/profile`
-
-\- 脚本内不再 `source ~/.bashrc`，避免 `set -u` 下被外部脚本污染中断
-
-\- `daemon.json` 模板替换后校验，防止 `{{...}}` 占位符残留导致 JSON 非法
-
-\- 数据目录仅改 owner，不再 `chmod -R 755`，避免破坏镜像层权限
-
-\- `chown docker.docker` 更新为 `docker:docker`（点分隔语法已弃用）
-
-\- 去掉 `useradd/groupadd` 硬编码 UID/GID=1001，避免与目标机冲突
-
-\- `CPU_ARCH` 改为运行时探测，扩展支持 `aarch64`
-
-\- `getopts` 增加 `?` / `:` 错误分支，且 `-r/-m/-t` 不再隐式启用 Swarm
-
-\- Swarm worker 模式对 Manager IP 与 Token 强校验
-
-\- `only_install_docker_compose` 在 Docker Engine 未运行时跳过 restart/info
-
-\### v2.0.0
-
-\- 重构日志系统、加入 `set -euo pipefail`、完善交互确认
-
-\### v1.3.x / v1.2.x / v1.1.x
-
-\- 详见 git 提交历史
-
-\## 👤 作者
-
-
-
-\*\*HTY1024\*\*
-
-
-
-\- Git: \[@HTY1024](https://git.hty1024.com/HTY1024)
-
-
-
-\## 🙏 致谢
-
-
+## 🙏 致谢
 
 感谢以下项目和资源：
 
+- [Docker](https://www.docker.com/)
+- [Docker Compose](https://docs.docker.com/compose/)
+- [Docker Swarm](https://docs.docker.com/engine/swarm/)
 
-
-\- \[Docker](https://www.docker.com/)
-
-\- \[Docker Compose](https://docs.docker.com/compose/)
-
-\- \[Docker Swarm](https://docs.docker.com/engine/swarm/)
-
-
-
-\[返回顶部](#docker-tools)
-
+[返回顶部](#docker-tools)

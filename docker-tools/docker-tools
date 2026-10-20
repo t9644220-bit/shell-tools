@@ -5,7 +5,7 @@ set -euo pipefail
 
 # 参数配置
 ## 版本号
-VERSION=2.3.0
+VERSION=2.4.0
 ## 当前的日期、日期时间
 DATE="$(date '+%Y%m%d')"
 DATETIME="$(date '+%Y%m%d_%H%M%S')"
@@ -300,7 +300,7 @@ help () {
   echo -e "${COLOR_BOLD_GREEN}使用方式:  docker-tools 参数 选项"
   echo -e "${COLOR_BOLD_BLUE}参数说明："
   echo -e "  ${COLOR_BLUE}-v： Docker 版本（可选，默认安装 29.5.2 版本）"
-  echo -e "  ${COLOR_BLUE}-i： Docker 安装目录（可选，默认为 /opt/docker/bin）"
+  echo -e "  ${COLOR_BLUE}-i： Docker 安装目录（可选，默认为 /opt/docker，程序位于其下 bin 目录）"
   echo -e "  ${COLOR_BLUE}-d： Docker 数据目录（可选，默认为 /opt/docker/data）"
   echo -e "  ${COLOR_BLUE}-p： Docker 安装包名称（可选，仅离线安装时使用，默认为在线安装）"
   echo -e "  ${COLOR_BLUE}-c： Docker Compose 版本（可选，默认安装 v5.1.4 版本）"
@@ -326,14 +326,14 @@ help () {
   echo -e "${COLOR_BOLD_GREEN}示例："
   echo -e "  ${COLOR_GREEN}安装 Docker （使用默认配置） ： docker-tools install"
   echo -e "  ${COLOR_GREEN}安装 Docker （使用默认配置（指定版本在线安装）） ： docker-tools -v 28.2.1 -c v2.36.2 install"
-  echo -e "  ${COLOR_GREEN}安装 Docker （使用默认配置（指定版本离线安装）） ： docker-tool -p docker-28.2.1.tgz -n docker-compose-linux-x86_64 install"
-  echo -e "  ${COLOR_GREEN}安装 Docker （使用自定义配置） ： docker-tools -v 28.2.1 -i /data/docker/bin -d /data/docker/data -p docker-28.2.1.tgz -c v2.36.2 -n docker-compose-linux-x86_64 install"
+  echo -e "  ${COLOR_GREEN}安装 Docker （使用默认配置（指定版本离线安装）） ： docker-tools -p docker-28.2.1.tgz -n docker-compose-linux-x86_64 install"
+  echo -e "  ${COLOR_GREEN}安装 Docker （使用自定义配置） ： docker-tools -v 28.2.1 -i /data/docker -d /data/docker/data -p docker-28.2.1.tgz -c v2.36.2 -n docker-compose-linux-x86_64 install"
   echo -e "  ${COLOR_GREEN}安装 Docker （同时作为 manager 节点启用 Swarm） ： docker-tools -s install"
   echo -e "  ${COLOR_GREEN}安装 Docker （同时作为 worker 节点启用 Swarm） ： docker-tools -s -r worker -m 192.168.0.100 -t 123456 install"
   echo -e "  ${COLOR_GREEN}安装 Docker （仅安装 Docker Engine） ： docker-tools -a install"
   echo -e "  ${COLOR_GREEN}安装 Docker （仅安装 Docker Compose） ： docker-tools -b install"
   echo -e "  ${COLOR_GREEN}卸载 Docker （使用默认配置） ： docker-tools uninstall"
-  echo -e "  ${COLOR_GREEN}卸载 Docker （使用自定义配置） ： docker-tools -v 28.2.1 -i /data/docker/bin -d /data/docker/data -p docker-28.2.1.tgz -c v2.36.2 -n docker-compose-linux-x86_64 uninstall"
+  echo -e "  ${COLOR_GREEN}卸载 Docker （使用自定义配置） ： docker-tools -v 28.2.1 -i /data/docker -d /data/docker/data -p docker-28.2.1.tgz -c v2.36.2 -n docker-compose-linux-x86_64 uninstall"
   echo -e "  ${COLOR_GREEN}重启 Docker ： docker-tools restart"
   echo -e "  ${COLOR_GREEN}设置 Docker 开机自启动 ： docker-tools enable"
   echo -e "  ${COLOR_GREEN}取消 Docker 开机自启动 ： docker-tools disable"
