@@ -1,5 +1,21 @@
 # Shell 工具集
 
+## 支持的 Linux 发行版
+
+| 工具 | RHEL 系（CentOS / RHEL / Rocky / Alma / Fedora） | SUSE 系（openSUSE / SLES） | Debian 系（Debian / Ubuntu） | 说明 |
+|---|---|---|---|---|
+| ghd | ✅ | ✅ | ✅ | 仅依赖 `wget` |
+| pip | ✅ | ✅ | ✅ | 仅依赖 `curl` |
+| dii | ✅ | ✅ | ✅ | 依赖 `skopeo`、`jq` |
+| bf | ✅ | ✅ | ✅ | 依赖 `tar`、`openssl` |
+| cvs | ✅ | ✅ | ✅ | 自动识别 `yum`、`dnf`、`zypper`、`apt`；RHEL 需可用 EPEL 源 |
+| sp | ⚠️ | ✅ | ⚠️ | 依赖 systemd；`/etc/sysconfig/proxy` 仅 SUSE 系提供，其他发行版自动跳过该步骤 |
+| docker-tools | ✅ | ✅ | ✅ | 依赖 systemd，仅支持 x86_64、aarch64，详见 [docker-tools/README.md](docker-tools/README.md) |
+
+> ✅：完整支持；⚠️：部分功能不可用（见说明）。不使用 systemd 的发行版（如 Alpine）不支持 `sp`、`docker-tools`。
+
+<br/>
+
 ## ghd
 
     GitHub 文件加速下载工具，支持 `github.com` 和 `raw.githubusercontent.com` 域名。
@@ -32,8 +48,8 @@ ghd https://github.com/docker/compose/releases/download/v2.18.1/docker-compose-l
 
 **所需依赖：**
 
-- skopeo（ 通过包管理器直接安装即可，如： `zypper install -y skopeo` 或 `yum install -y skopeo` ）
-- jq（ 通过包管理器直接安装即可，如： `zypper install -y jq` 或 `yum install -y jq` ）
+- skopeo（ 通过包管理器直接安装即可，如： `zypper install -y skopeo`、`yum install -y skopeo` 或 `apt-get install -y skopeo` ）
+- jq（ 通过包管理器直接安装即可，如： `zypper install -y jq`、`yum install -y jq` 或 `apt-get install -y jq` ）
 
 **参数说明：**
 
@@ -85,7 +101,7 @@ dii mysql t
   - `2` ： 移动至指定目录；
   - `3` ： 直接删除（不推荐）
 - `$3` ： 工作目录，用于输出日志、存放病毒文件，不配置时默认为 `/opt/clamav` 目录
-- `$4` ： 包管理器，支持 `yum`、`zypper`，不配置时默认根据操作系统自动选择
+- `$4` ： 包管理器，支持 `yum`、`dnf`、`zypper`、`apt`，不配置时默认根据操作系统自动选择
 
 **使用方式：**
 
@@ -133,7 +149,7 @@ cvs /home 2 /tmp/clamav
 
 **所需依赖：**
 
-- openssl（ 通过包管理器直接安装即可，如：`zypper install -y openssl` 或 `yum install -y openssl` ）
+- openssl（ 通过包管理器直接安装即可，如：`zypper install -y openssl`、`yum install -y openssl` 或 `apt-get install -y openssl` ）
 - 如保存备份文件到 Amazon S3 ，则需安装：AWS CLI（ 安装方式请参考官方文档：https://aws.amazon.com/cn/cli ）
 - 如保存备份文件到腾讯云 COS，则需安装：coscli（ 安装方式请参考官方文档：https://cloud.tencent.com/document/product/436/63144 ）
 - 如保存备份文件到华为云 OBS，则需安装：obsutil（ 安装方式请参考官方文档：https://support.huaweicloud.com/utiltg-obs/obs_11_0003.html ）
@@ -171,6 +187,12 @@ bf gitea /opt/gitea /root/gitea.key
 ## sp
 
     设置系统代理工具。
+
+**所需依赖：**
+
+- systemd
+- 设置用户代理（ `/etc/sysconfig/proxy` ）仅在 openSUSE/SLES 上生效，其他发行版会自动跳过该步骤
+- 可重复执行：再次执行会覆盖之前设置的代理配置，不会重复追加；修改前的文件当天首次执行时备份为 `*.bak.日期`
 
 **参数说明：**
 

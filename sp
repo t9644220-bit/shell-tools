@@ -4,7 +4,7 @@
 
 # 参数配置
 ## 版本号
-VERSION="0.1.0"
+VERSION="0.2.0"
 ## 当前的日期、日期时间
 DATE=`date +%Y%m%d`
 DATETIME=`date +%Y%m%d`_`date +%H%M%S`
@@ -22,7 +22,20 @@ help () {
 }
 ## 版本号
 version () {
- echo 'sp '$version
+ echo 'sp '$VERSION
+}
+
+## 备份文件（当天已有备份时不再覆盖，保留首次执行前的原始文件）
+backupFile () {
+  if [ -f "$1" ] && [ ! -f "$1.bak.$DATE" ]; then
+    cp -rpf "$1" "$1.bak.$DATE"
+  fi
+}
+## 删除已有的代理配置块（# PROXY Env Begin 至 # PROXY Env End）
+removeProxyEnv () {
+  if [ -f "$1" ]; then
+    sed -i '/# PROXY Env Begin/,/# PROXY Env End/d' "$1"
+  fi
 }
 
 ## 设置 systemd 代理
@@ -30,7 +43,8 @@ setSystemdProxy () {
   echo '------------------------------ 开始设置系统代理 （ /etc/systemd/system.conf.d/proxy.conf ） ... ------------------------------'
   
   mkdir -p /etc/systemd/system.conf.d/
-  echo '[Manager]' >> /etc/systemd/system.conf.d/proxy.conf
+  # 覆盖写入，避免重复执行时追加重复配置
+  echo '[Manager]' > /etc/systemd/system.conf.d/proxy.conf
   echo 'DefaultEnvironment="HTTP_PROXY=http://'$PROXY_URL'"' >> /etc/systemd/system.conf.d/proxy.conf
   echo 'DefaultEnvironment="HTTPS_PROXY=http://'$PROXY_URL'"' >> /etc/systemd/system.conf.d/proxy.conf
   echo 'DefaultEnvironment="FTP_PROXY=http://'$PROXY_URL'"' >> /etc/systemd/system.conf.d/proxy.conf
@@ -43,12 +57,20 @@ setSystemdProxy () {
 ## 设置用户代理
 setUserProxy () {
   echo '------------------------------ 开始设置用户代理 （ /etc/sysconfig/proxy ） ... ------------------------------'
-  
-  cp -rpf /etc/sysconfig/proxy /etc/sysconfig/proxy.bak.$DATE
-  sed -i 's#PROXY_ENABLED="no"#PROXY_ENABLED="yes"#g' /etc/sysconfig/proxy
-  sed -i 's#HTTP_PROXY=""#HTTP_PROXY="http://'$PROXY_URL'"#g' /etc/sysconfig/proxy
-  sed -i 's#HTTPS_PROXY=""#HTTPS_PROXY="http://'$PROXY_URL'"#g' /etc/sysconfig/proxy
-  sed -i 's#FTP_PROXY=""#FTP_PROXY="http://'$PROXY_URL'"#g' /etc/sysconfig/proxy
+
+  # /etc/sysconfig/proxy 为 openSUSE/SLES 特有文件，其他发行版跳过此步骤
+  if [ ! -f /etc/sysconfig/proxy ]; then
+    echo '未找到 /etc/sysconfig/proxy（仅 openSUSE/SLES 提供），跳过用户代理设置'
+    echo '------------------------------ 用户代理设置已跳过! ------------------------------'
+    return 0
+  fi
+
+  backupFile /etc/sysconfig/proxy
+  # 按整行替换，重复执行或更换代理地址时均可正确更新
+  sed -i 's#^PROXY_ENABLED=.*#PROXY_ENABLED="yes"#g' /etc/sysconfig/proxy
+  sed -i 's#^HTTP_PROXY=.*#HTTP_PROXY="http://'$PROXY_URL'"#g' /etc/sysconfig/proxy
+  sed -i 's#^HTTPS_PROXY=.*#HTTPS_PROXY="http://'$PROXY_URL'"#g' /etc/sysconfig/proxy
+  sed -i 's#^FTP_PROXY=.*#FTP_PROXY="http://'$PROXY_URL'"#g' /etc/sysconfig/proxy
   source /etc/sysconfig/proxy
  
   echo '------------------------------ 用户代理设置完成! ------------------------------' 
@@ -58,7 +80,8 @@ setUserProxy () {
 setShellProxy () {
   echo '------------------------------ 开始设置命令行代理 （ /etc/profile 和 ~/.bashrc ） ... ------------------------------'
 
-  cp -rpf /etc/profile /etc/profile.bak.$DATE
+  backupFile /etc/profile
+  removeProxyEnv /etc/profile
   echo '# PROXY Env Begin' >> /etc/profile
   echo 'export http_proxy="http://'$PROXY_URL'"' >> /etc/profile
   echo 'export https_proxy="http://'$PROXY_URL'"' >> /etc/profile
@@ -67,7 +90,8 @@ setShellProxy () {
   echo '# PROXY Env End' >> /etc/profile
   source /etc/profile
 
-  cp -rpf ~/.bashrc ~/.bashrc.bak.$DATE
+  backupFile ~/.bashrc
+  removeProxyEnv ~/.bashrc
   echo '# PROXY Env Begin' >> ~/.bashrc
   echo 'export http_proxy="http://'$PROXY_URL'"' >> ~/.bashrc
   echo 'export https_proxy="http://'$PROXY_URL'"' >> ~/.bashrc
