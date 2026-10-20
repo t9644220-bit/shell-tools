@@ -192,6 +192,7 @@ bf gitea /opt/gitea /root/gitea.key
 
 - systemd
 - 设置用户代理（ `/etc/sysconfig/proxy` ）仅在 openSUSE/SLES 上生效，其他发行版会自动跳过该步骤
+- 可重复执行：再次执行会覆盖之前设置的代理配置，不会重复追加；修改前的文件当天首次执行时备份为 `*.bak.日期`
 
 **参数说明：**
 
