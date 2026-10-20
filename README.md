@@ -193,7 +193,14 @@ sp 192.168.1.100:30000
 
 ## docker-tools
 
-    Docker 工具
+    Docker 工具：以静态二进制包安装、更新、卸载 Docker Engine / Docker Compose，并支持 Docker Swarm。
+
+详细文档见 [docker-tools/README.md](docker-tools/README.md)，发布包见 [releases](releases) 目录。
+
+**所需文件：**
+
+- `docker-tools`、`daemon.json`、`docker.service`、`docker.socket` 需放在同一目录（发布包已包含）
+- 离线安装时，安装包也需放在该目录
 
 **使用方式**:  
 
@@ -203,11 +210,11 @@ docker-tools 参数 选项
 
 **参数说明**：
 
-  - `-v`： Docker 版本（可选，默认安装 28.1.1 版本）
-  - `-i`： Docker 安装目录（可选，默认为 /opt/docker/bin）
+  - `-v`： Docker 版本（可选，默认安装 29.5.2 版本）
+  - `-i`： Docker 安装目录（可选，默认为 /opt/docker，程序位于其下 bin 目录）
   - `-d`： Docker 数据目录（可选，默认为 /opt/docker/data）
   - `-p`： Docker 安装包名称（可选，仅离线安装时使用，默认为在线安装）
-  - `-c`： Docker Compose 版本（可选，默认安装 v2.36.0 版本）
+  - `-c`： Docker Compose 版本（可选，默认安装 v5.1.4 版本）
   - `-n`： Docker Compose 安装包名称（可选，仅离线安装时使用，默认为在线安装）
   - `-a`： 仅安装 Docker Engine（可选，默认安装 Docker Engine 和 Docker Compose ）
   - `-b`： 仅安装 Docker Compose（可选，默认安装 Docker Engine 和 Docker Compose ）
@@ -218,6 +225,7 @@ docker-tools 参数 选项
 
 **选项说明**：
 
+  - `help`： 查看帮助信息（不带选项时默认）
   - `version`： 查看工具版本
   - `install`： 安装 Docker
   - `uninstall`： 卸载 Docker
@@ -232,17 +240,20 @@ docker-tools 参数 选项
 
 **示例**：
 
-  - 安装 Docker （使用默认配置） ： `docker-tools install`
-  - 安装 Docker （使用自定义配置） ： `docker-tools -v 28.1.1 -i /data/docker/bin -d /data/docker/data -p docker-28.1.1.tgz -c v2.36.0 -n docker-compose-linux-x86_64 install`
+  - 安装 Docker （使用默认配置，在线安装） ： `docker-tools install`
+  - 安装 Docker （指定版本在线安装） ： `docker-tools -v 28.2.1 -c v2.36.2 install`
+  - 安装 Docker （离线安装） ： `docker-tools -p docker-28.2.1.tgz -n docker-compose-linux-x86_64 install`
+  - 安装 Docker （使用自定义目录） ： `docker-tools -i /data/docker -d /data/docker/data install`
   - 安装 Docker （同时作为 manager 节点启用 Swarm） ： `docker-tools -s install`
-  - 安装 Docker （同时作为 worker 节点启用 Swarm） ： `docker-tools -s -r worker -m 192.168.0.100 -t 123456 install`
-  - 安装 Docker （仅安装 Docker Engine） ： `docker-tools -oe install`
-  - 安装 Docker （仅安装 Docker Compose） ： `docker-tools -oc install`
+  - 安装 Docker （同时作为 worker 节点启用 Swarm） ： `docker-tools -s -r worker -m 192.168.0.100 -t SWMTKN-1-xxx install`
+  - 安装 Docker （仅安装 Docker Engine） ： `docker-tools -a install`
+  - 安装 Docker （仅安装 Docker Compose） ： `docker-tools -b install`
   - 卸载 Docker （使用默认配置） ： `docker-tools uninstall`
-  - 卸载 Docker （使用自定义配置） ： `docker-tools -v 28.1.1 -i /data/docker/bin -d /data/docker/data -p docker-28.1.1.tgz -c v2.36.0 -n docker-compose-linux-x86_64 uninstall`
+  - 卸载 Docker （使用自定义目录） ： `docker-tools -i /data/docker -d /data/docker/data uninstall`
+  - 更新 Docker （在线更新到指定版本） ： `docker-tools -v 29.5.2 -c v5.1.4 update`
   - 重启 Docker ： `docker-tools restart`
   - 设置 Docker 开机自启动 ： `docker-tools enable`
   - 取消 Docker 开机自启动 ： `docker-tools disable`
   - 设置 Docker Swarm（manager） ： `docker-tools swarm`
-  - 设置 Docker Swarm（worker） ： `docker-tools -r worker -m 192.168.0.100 -t 123456 swarm`
+  - 设置 Docker Swarm（worker） ： `docker-tools -r worker -m 192.168.0.100 -t SWMTKN-1-xxx swarm`
   - 查看 Docker 信息 ： `docker-tools info`
