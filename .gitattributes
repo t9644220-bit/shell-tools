@@ -18,6 +18,13 @@ docker-tools/daemon.json   text eol=lf
 docker-tools/docker.service text eol=lf
 docker-tools/docker.socket text eol=lf
 
+# kubernetes-tools 相关
+kubernetes-tools/kubernetes-tools    text eol=lf
+kubernetes-tools/kubeadm-config.yaml text eol=lf
+kubernetes-tools/containerd.service  text eol=lf
+kubernetes-tools/kubelet.service     text eol=lf
+kubernetes-tools/10-kubeadm.conf     text eol=lf
+
 # 二进制（含 zip 发布包）保持原样
 releases/*.zip binary
 *.png  binary
