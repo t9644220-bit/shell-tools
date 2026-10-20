@@ -17,16 +17,16 @@ SYSTEMD_DIR=/usr/lib/systemd/system
 DOCKER_INSTALL_DIR=/opt/docker
 ## Docker 数据目录
 DOCKER_DATA_DIR=/opt/docker/data
-## 是否离线安装
-NEED_OFFLINE_INSTALL=true
+## 是否离线安装（默认在线安装，通过 -p / -n 指定安装包名称时自动切换为离线安装）
+NEED_OFFLINE_INSTALL=false
 ## 是否安装 Docker Engine
 NEED_INSTALL_ENGINE=true
 ## Docker 版本号
 DOCKER_VERSION=29.5.2
 ## Docker 安装包下载地址（在线安装时使用）
 DOCKER_PACKAGE_URL=https://download.docker.com/linux/static/stable
-## Docker 安装包名称（离线安装时使用）
-DOCKER_PACKAGE_NAME=docker-29.5.2.tgz
+## Docker 安装包名称（离线安装时使用，留空则默认为 docker-${DOCKER_VERSION}.tgz，随 -v 变化）
+DOCKER_PACKAGE_NAME=""
 ## 是否安装 Docker Compose
 NEED_INSTALL_COMPOSE=true
 ## Docker Compose 版本号
@@ -199,11 +199,13 @@ check_file () {
 
   # 离线安装时，检查是否有安装包
   if [[ "${NEED_OFFLINE_INSTALL}" == true ]]; then
-    if [[ -z "${DOCKER_PACKAGE_NAME}" ]]; then
-      log_error "请在【 DOCKER_PACKAGE_NAME 】中（或通过【 -p 安装包名称 】）配置 Docker Engine 安装包名称，并确保安装包在本脚本的同级目录！"
-    fi
-    if [[ ! -e "${DOCKER_PACKAGE_NAME}" ]]; then
-      log_error "未在本脚本的同级目录找到 Docker Engine 安装包【 "${DOCKER_PACKAGE_NAME}" 】！"
+    if [[ "${NEED_INSTALL_ENGINE}" == true ]]; then
+      if [[ -z "${DOCKER_PACKAGE_NAME}" ]]; then
+        log_error "请在【 DOCKER_PACKAGE_NAME 】中（或通过【 -p 安装包名称 】）配置 Docker Engine 安装包名称，并确保安装包在本脚本的同级目录！"
+      fi
+      if [[ ! -e "${DOCKER_PACKAGE_NAME}" ]]; then
+        log_error "未在本脚本的同级目录找到 Docker Engine 安装包【 "${DOCKER_PACKAGE_NAME}" 】！"
+      fi
     fi
 
     if [[ "${NEED_INSTALL_COMPOSE}" == true ]]; then
@@ -516,7 +518,7 @@ install_docker_compose () {
 backup_docker_compose () {
   log_info '------------------------------ 开始备份 Docker Compose... ------------------------------'
 
-  mkdir -pv "${DOCKER_INSTALL_DIRn}"'_bin_bak_'"${DATETIME}"
+  mkdir -pv "${DOCKER_INSTALL_DIR}"'_bin_bak_'"${DATETIME}"
   cp -rpf "${DOCKER_INSTALL_DIR}"/bin/docker-compose "${DOCKER_INSTALL_DIR}"'_bin_bak_'"${DATETIME}"/docker-compose
 
   log_info '------------------------------ Docker Compose 备份完成! ------------------------------'
@@ -704,6 +706,13 @@ only_install_docker_engine () {
 only_install_docker_compose () {
   log_info '------------------------------ 开始安装 Docker Compose... ------------------------------'
 
+  # 仅安装 Compose（-b）时 Engine 流程未执行，需自行准备用户、目录和环境变量
+  create_user
+  mkdir -pv "${DOCKER_INSTALL_DIR}"/{bin,conf}
+  if [[ "${NEED_INSTALL_ENGINE}" == false ]]; then
+    config_env
+  fi
+
   if [[ "${NEED_OFFLINE_INSTALL}" == false ]]; then
     download_docker_compose_package
   fi
@@ -829,8 +838,13 @@ uninstall () {
   log_info 'Docker 安装目录 ： '"${DOCKER_INSTALL_DIR}"
   log_info 'Docker 数据目录 ： '"${DOCKER_DATA_DIR}"
   if confirm_action '此操作将会卸载 Docker 服务，并删除所有文件（包含 Docker 程序文件、镜像、容器文件等），请确认是否卸载（y：卸载，n：不卸载）'; then
-    disable_docker
-    stop_docker
+    # 服务不存在时（未安装或安装中途失败）systemctl 会报错，在 set -e 下会中止后续清理
+    if systemctl cat docker.service >/dev/null 2>&1; then
+      disable_docker
+      stop_docker
+    else
+      log_warning '未找到 docker.service，跳过取消自启动和停止步骤。'
+    fi
     remove_service
     remove_env
     remove_system_config
@@ -983,6 +997,9 @@ if [[ "${NEED_ENABLE_DOCKER_SWARM}" == true && "${DOCKER_SWARM_ROLE}" == "worker
     log_error "worker 角色必须通过 -t 指定有效 Swarm Token（默认占位 123456 不可用）！"
   fi
 fi
+
+# 未指定 Docker Engine 安装包名称时，按版本号推导（保证 -v 在离线安装时同样生效）
+DOCKER_PACKAGE_NAME="${DOCKER_PACKAGE_NAME:-docker-${DOCKER_VERSION}.tgz}"
 
 # 移除已经使用的参数
 shift $((OPTIND-1))
